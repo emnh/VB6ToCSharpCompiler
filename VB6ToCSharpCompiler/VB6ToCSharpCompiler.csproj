@@ -172,7 +172,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Util.cs" />
+    <Compile Include="JavaUtil.cs" />
     <Compile Include="VB6Compiler.cs" />
     <Compile Include="CompileResult.cs" />
     <Compile Include="frmCompiler.cs">

@@ -82,7 +82,7 @@ namespace VB6ToCSharpCompiler
                 returnValue.ModuleNames.Add(modName);
                 // TODO: use Trivia Syntax Elements?
                 returnValue.CSharpCode += "// Module Name: " + modName + "\r\n";
-                var syntaxTree = Translator.Translate(module);
+                var syntaxTree = Translator.Translate(program, module);
                 returnValue.CSharpCode += syntaxTree.ToFullString() + "\r\n";
                 //syntaxTree.
                 //visitor.visit(((ModuleImpl)modules.get(i)).getCtx());
