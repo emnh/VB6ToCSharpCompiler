@@ -30,7 +30,7 @@ namespace VB6ToCSharpCompiler
 
             if (compileResult.Program == null)
             {
-                throw new ArgumentNullException(nameof(compileResult.Program));
+                throw new ArgumentNullException(nameof(compileResult));
             }
 
             var modules = program.getModules();

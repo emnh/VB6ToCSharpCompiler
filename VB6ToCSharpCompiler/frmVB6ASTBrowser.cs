@@ -27,22 +27,22 @@ namespace VB6ToCSharpCompiler
         {
             var compileResult = VB6Compiler.Compile(FileName);
 
-            var NodeMap = new Dictionary<ParseTree, TreeNode>();
+            var nodeMap = new Dictionary<ParseTree, TreeNode>();
             
             var visitorCallback = new VisitorCallback()
             {
                 Callback = (node, parent) =>
                 {
                     var name = node.GetType().Name;
-                    if (parent != null && NodeMap.ContainsKey(parent))
+                    if (parent != null && nodeMap.ContainsKey(parent))
                     {
-                        var tvNode = NodeMap[parent].Nodes.Add(NodeMap.Count.ToString(new NumberFormatInfo()), name);
-                        NodeMap[node] = tvNode;
+                        var tvNode = nodeMap[parent].Nodes.Add(nodeMap.Count.ToString(new NumberFormatInfo()), name);
+                        nodeMap[node] = tvNode;
                     }
                     else
                     {
-                        var tvNode = treVB6AST.Nodes.Add(NodeMap.Count.ToString(new NumberFormatInfo()), name);
-                        NodeMap[node] = tvNode;
+                        var tvNode = treVB6AST.Nodes.Add(nodeMap.Count.ToString(new NumberFormatInfo()), name);
+                        nodeMap[node] = tvNode;
                     }
                 }
             };
