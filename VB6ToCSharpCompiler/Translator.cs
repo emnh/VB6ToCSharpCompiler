@@ -26,8 +26,7 @@ namespace VB6ToCSharpCompiler
 
             var ctx = module.getCtx();
             var body = ctx.moduleBody();
-            var nsName = "VB6ConvertedApp";
-            var ns = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(nsName));
+            
 
             /*
             var class = SyntaxFactory.ClassDeclaration(
@@ -54,7 +53,7 @@ namespace VB6ToCSharpCompiler
             );
             var classModifiers = SyntaxFactory.TokenList(new List<SyntaxToken>()
             {
-
+                SyntaxFactory.Token(SyntaxKind.PublicKeyword)
             });
             var className = module.getName();
             var cls = SyntaxFactory.ClassDeclaration(
@@ -72,10 +71,39 @@ namespace VB6ToCSharpCompiler
             );
             classes.Add(cls);
 
+            var nsExterns = SyntaxFactory.List<ExternAliasDirectiveSyntax>(
+                new List<ExternAliasDirectiveSyntax>()
+                {
+                    //SyntaxFactory.ExternAliasDirective(SyntaxFactory.Token(SyntaxKind.ExternKeyword))
+                });
+
+            var nsUsings = SyntaxFactory.List<UsingDirectiveSyntax>(new List<UsingDirectiveSyntax>()
+                {
+                    //SyntaxFactory.UsingDirective(SyntaxFactory.NameEquals("usingAlias"), SyntaxFactory.ParseName("blah"))
+                }
+            );
+
+            var nsAttributeLists = SyntaxFactory.List<AttributeListSyntax>(
+                new List<AttributeListSyntax>()
+                {
+                    //SyntaxFactory.AttributeList()
+                }
+            );
+
+            var nsMembers = SyntaxFactory.List<MemberDeclarationSyntax>(new List<MemberDeclarationSyntax>(
+                classes
+            ));
+
+            var nsName = "VB6ConvertedApp";
+            var csharpNamespace = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(nsName), nsExterns, nsUsings,
+                nsMembers);
+
+            /*
             foreach (var element in body.moduleBodyElement().JavaListToCSharpList<VisualBasic6Parser.ModuleBodyElementContext>())
             {
                 
             }
+            */
 
             var externs = SyntaxFactory.List<ExternAliasDirectiveSyntax>(
                 new List<ExternAliasDirectiveSyntax>()
@@ -97,7 +125,7 @@ namespace VB6ToCSharpCompiler
             );
 
             var members = SyntaxFactory.List<MemberDeclarationSyntax>(new List<MemberDeclarationSyntax>(
-                classes
+                new List<MemberDeclarationSyntax>() { csharpNamespace }
                 ));
 
             var compilationUnit = SyntaxFactory.CompilationUnit(
@@ -107,7 +135,7 @@ namespace VB6ToCSharpCompiler
                 members,
                 SyntaxFactory.Token(SyntaxKind.EndOfFileToken));
 
-            return compilationUnit;
+            return compilationUnit.NormalizeWhitespace();
         }
     }
 }
