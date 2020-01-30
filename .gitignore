@@ -1,0 +1,5 @@
+/.vs
+*~
+VB6ToCSharpCompiler/bin/
+VB6ToCSharpCompiler/obj/
+packages/
