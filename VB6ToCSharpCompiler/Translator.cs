@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using com.ibm.icu.util;
+using com.sun.org.apache.bcel.@internal.classfile;
 using com.sun.org.apache.xpath.@internal.functions;
 using io.proleap.vb6;
 using io.proleap.vb6.asg.metamodel.impl;
@@ -43,10 +44,14 @@ namespace VB6ToCSharpCompiler
                     return "double";
                 case "Currency":
                     return "TCurrency";
+                case "Form":
+                    return "Form";
             }
-            return "UknownType_" + vbType;
+            //return "UknownType_" + vbType;
+            return vbType;
         }
 
+        [Obsolete]
         public static string LookupType(VisualBasic6Parser.TypeContext typeContext)
         {
             if (typeContext == null)
@@ -74,24 +79,75 @@ namespace VB6ToCSharpCompiler
             return TranslateType(typeContext.getName());
         }
 
-        public static BlockSyntax GetBody(VisualBasic6Parser.BlockContext block)
+
+        public static List<LocalDeclarationStatementSyntax> GetVariableDeclaration(io.proleap.vb6.asg.metamodel.Program program,
+            VisualBasic6Parser.VariableStmtContext stmt)
+        {
+            var a = stmt.variableListStmt();
+            var declarations = new List<LocalDeclarationStatementSyntax>();
+
+            var listStmt = stmt.variableListStmt();
+
+            /*
+            
+            var asg = (VariableImpl)program.getASGElementRegistry().getASGElement(listStmt);
+
+            var declName = asg.getName();
+
+            var declTypeName = LookupType(asg.getType());
+            */
+
+            foreach (var varDecl in listStmt.variableSubStmt().JavaListToCSharpList<VisualBasic6Parser.VariableSubStmtContext>())
+            {
+                var asgSub = (VariableImpl) program.getASGElementRegistry().getASGElement(varDecl);
+
+                var name = asgSub.getName();
+
+                var typeName = LookupType(asgSub.getType());
+
+                //Console.Error.WriteLine("VAR: " + declName + " " + declTypeName + " " + name + " " + typeName);
+
+                var variables =
+                    SyntaxFactory.SeparatedList<VariableDeclaratorSyntax>(
+                        new List<VariableDeclaratorSyntax> { SyntaxFactory.VariableDeclarator(name) }
+                    );
+
+                //variables.Add(SyntaxFactory.VariableDeclarator("blah"));
+
+                var declaration = SyntaxFactory
+                    .LocalDeclarationStatement(
+                        SyntaxFactory
+                            .VariableDeclaration(SyntaxFactory.IdentifierName(
+                                SyntaxFactory.Identifier(typeName)), variables));
+
+                declarations.Add(declaration);
+            }
+            return declarations;
+        }
+
+        public static BlockSyntax GetBody(io.proleap.vb6.asg.metamodel.Program program, VisualBasic6Parser.BlockContext block)
         {
             var comment = SyntaxFactory.Comment("// METHOD BODY");
 
-            var commentList = new List<StatementSyntax>();
+            var statementList = new List<StatementSyntax>();
 
-            commentList.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(comment));
+            statementList.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(comment));
 
             if (block != null)
             {
                 foreach (var stmt in block.blockStmt().JavaListToCSharpList<VisualBasic6Parser.BlockStmtContext>())
                 {
-                    commentList.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(SyntaxFactory.Comment("// " + stmt.getText())));
+                    statementList.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(SyntaxFactory.Comment("// " + stmt.getText())));
+                    if (stmt.variableStmt() != null)
+                    {
+                        var variableDeclarations = GetVariableDeclaration(program, stmt.variableStmt());
+                        statementList.AddRange(variableDeclarations);
+                    }
                 }
             }
 
             return SyntaxFactory.Block(SyntaxFactory.List<StatementSyntax>(
-                commentList
+                statementList
             ));
         }
 
@@ -148,7 +204,7 @@ namespace VB6ToCSharpCompiler
             TypeSyntax returnType = null;
             if (subStmt != null)
             {
-                var asg = (SubImpl)program.getASGElementRegistry().getASGElement(subStmt);
+                var asg = (SubImpl) program.getASGElementRegistry().getASGElement(subStmt);
                 if (asg == null)
                 {
                     throw new InvalidOperationException("asg is null");
@@ -178,9 +234,7 @@ namespace VB6ToCSharpCompiler
 
             ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier = null; // SyntaxFactory.ExplicitInterfaceSpecifier(SyntaxFactory.ParseName("testInterface"));
 
-            var typeParameterList =
-                SyntaxFactory.TypeParameterList(new SeparatedSyntaxList<TypeParameterSyntax>(
-                ));
+            TypeParameterListSyntax typeParameterList = null; // SyntaxFactory.TypeParameterList(new SeparatedSyntaxList<TypeParameterSyntax>());
 
             // TODO: fix it
             var parameterList = new List<ParameterSyntax>();
@@ -189,9 +243,12 @@ namespace VB6ToCSharpCompiler
             {
                 // TODO: check if BYREF or BYVAL
                 // TODO: check if arg.toString() gives the correct name
-                var argName = arg.toString();
-                var typeName = LookupType(arg.asTypeClause().type());
-                // var csharpArg = arg.typeHint()
+                var argImpl = (ArgImpl) program.getASGElementRegistry().getASGElement(arg);
+                Console.Error.WriteLine("Parameter Type: " + LookupType(argImpl.getType()));
+
+                var argName = argImpl.getName();
+                var typeName = LookupType(argImpl.getType());
+                
                 parameterList.Add(
                     SyntaxFactory.Parameter(
                         SyntaxFactory.List<AttributeListSyntax>(),
@@ -213,7 +270,7 @@ namespace VB6ToCSharpCompiler
             }
             
 
-            var csharpBody = GetBody(block);
+            var csharpBody = GetBody(program, block);
 
             var semicolonToken = SyntaxFactory.Token(SyntaxKind.SemicolonToken);
 
@@ -222,6 +279,7 @@ namespace VB6ToCSharpCompiler
                 semicolonToken);
             return method;
         }
+
 
         public static CompilationUnitSyntax Translate(io.proleap.vb6.asg.metamodel.Program program, ModuleImpl module)
         {
