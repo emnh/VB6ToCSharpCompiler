@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using com.ibm.icu.util;
+using com.sun.org.apache.xpath.@internal.functions;
 using io.proleap.vb6;
 using io.proleap.vb6.asg.metamodel.impl;
+using io.proleap.vb6.asg.metamodel.statement.function.impl;
+using io.proleap.vb6.asg.metamodel.statement.sub.impl;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -15,6 +19,33 @@ namespace VB6ToCSharpCompiler
     public static class Translator
     {
 
+        public static string TranslateType(string vbType)
+        {
+            switch (vbType)
+            {
+                case "Boolean":
+                    return "bool";
+                case "String":
+                    return "string";
+                case "Variant":
+                    return "UknownType_Variant";
+                case "Date":
+                    return "TDato";
+                case "Byte":
+                    return "byte";
+                case "Integer":
+                    return "int";
+                case "Long":
+                    return "long";
+                case "Single":
+                    return "single";
+                case "Double":
+                    return "double";
+                case "Currency":
+                    return "TCurrency";
+            }
+            return "UknownType_" + vbType;
+        }
 
         public static string LookupType(VisualBasic6Parser.TypeContext typeContext)
         {
@@ -31,6 +62,16 @@ namespace VB6ToCSharpCompiler
                 }
             }
             return "unknownType";
+        }
+
+        public static string LookupType(io.proleap.vb6.asg.metamodel.type.Type typeContext)
+        {
+            if (typeContext == null)
+            {
+                throw new ArgumentNullException(nameof(typeContext));
+            }
+
+            return TranslateType(typeContext.getName());
         }
 
         public static BlockSyntax GetBody(VisualBasic6Parser.BlockContext block)
@@ -103,23 +144,39 @@ namespace VB6ToCSharpCompiler
             var subStmt = element.subStmt();
             var funStmt = element.functionStmt();
 
-            var asg =
-                subStmt != null ?
-                    program.getASGElementRegistry().getASGElement(subStmt) :
-                    program.getASGElementRegistry().getASGElement(funStmt);
-
-            if (asg == null)
+            SyntaxToken identifier = SyntaxFactory.Identifier("uknownMethodName");
+            TypeSyntax returnType = null;
+            if (subStmt != null)
             {
-                throw new InvalidOperationException("asg is null");
+                var asg = (SubImpl)program.getASGElementRegistry().getASGElement(subStmt);
+                if (asg == null)
+                {
+                    throw new InvalidOperationException("asg is null");
+                }
+                returnType = SyntaxFactory.ParseTypeName("void");
+                identifier = SyntaxFactory.Identifier(asg.getName());
+            }
+            else
+            {
+                var asg = (FunctionImpl)program.getASGElementRegistry().getASGElement(funStmt);
+                if (asg == null)
+                {
+                    throw new InvalidOperationException(nameof(asg) + " is null");
+                }
+                returnType = SyntaxFactory.ParseTypeName(LookupType(asg.getType()));
+                identifier = SyntaxFactory.Identifier(asg.getName());
             }
 
-            // TODO: correct it
-            
-            var returnType = SyntaxFactory.ParseTypeName(asg.GetType().Name);
+            if (returnType == null)
+            {
+                throw new InvalidOperationException(nameof(returnType) + " is null");
+            }
+            if (identifier == null)
+            {
+                throw new InvalidOperationException(nameof(identifier) + " is null");
+            }
 
-            var explicitInterfaceSpecifier = SyntaxFactory.ExplicitInterfaceSpecifier(SyntaxFactory.ParseName("testInterface"));
-
-            var identifier = SyntaxFactory.Identifier("methodName");
+            ExplicitInterfaceSpecifierSyntax explicitInterfaceSpecifier = null; // SyntaxFactory.ExplicitInterfaceSpecifier(SyntaxFactory.ParseName("testInterface"));
 
             var typeParameterList =
                 SyntaxFactory.TypeParameterList(new SeparatedSyntaxList<TypeParameterSyntax>(
