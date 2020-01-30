@@ -172,7 +172,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Compiler.cs" />
+    <Compile Include="VB6Compiler.cs" />
     <Compile Include="CompileResult.cs" />
     <Compile Include="frmCompiler.cs">
       <SubType>Form</SubType>
@@ -183,6 +183,14 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Translator.cs" />
+    <Compile Include="frmVB6ASTBrowser.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmVB6ASTBrowser.Designer.cs">
+      <DependentUpon>frmVB6ASTBrowser.cs</DependentUpon>
+    </Compile>
+    <Compile Include="VB6ASTTreeViewGeneratorVisitor.cs" />
+    <Compile Include="VisitorCallback.cs" />
     <EmbeddedResource Include="frmCompiler.resx">
       <DependentUpon>frmCompiler.cs</DependentUpon>
     </EmbeddedResource>
@@ -196,6 +204,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="frmVB6ASTBrowser.resx">
+      <DependentUpon>frmVB6ASTBrowser.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="..\.editorconfig">
       <Link>.editorconfig</Link>
     </None>

@@ -13,7 +13,6 @@ namespace VB6ToCSharpCompiler
     {
         public static CompilationUnitSyntax Translate(ModuleImpl module)
         {
-
             return SyntaxFactory.CompilationUnit();
         }
     }

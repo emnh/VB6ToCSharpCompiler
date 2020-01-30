@@ -12,6 +12,8 @@ namespace VB6ToCSharpCompiler
 {
     public partial class frmCompiler : Form
     {
+        private frmVB6ASTBrowser frmVb6AstBrowser;
+
         public frmCompiler()
         {
             InitializeComponent();
@@ -22,7 +24,7 @@ namespace VB6ToCSharpCompiler
             var fileName = (string) lstFileNames.SelectedItem;
 
 
-            var compileResult = Compiler.Compile(fileName);
+            var compileResult = VB6Compiler.Compile(fileName);
             txtVBCode.Text = compileResult.VBCode;
             txtCSharpCode.Text += "// C Sharp Code:\r\n" + compileResult.CSharpCode;
             txtVBCode.ScrollBars = ScrollBars.Both;
@@ -31,10 +33,17 @@ namespace VB6ToCSharpCompiler
 
         private void frmCompiler_Load(object sender, EventArgs e)
         {
-            foreach (var fileName in Compiler.GetFiles())
+            foreach (var fileName in VB6Compiler.GetFiles())
             {
                 lstFileNames.Items.Add(fileName);
             }
+        }
+
+        private void btnBrowseVB6AST_Click(object sender, EventArgs e)
+        {
+            var fileName = (string)lstFileNames.SelectedItem;
+            frmVb6AstBrowser = new frmVB6ASTBrowser(fileName);
+            frmVb6AstBrowser.Visible = true;
         }
     }
 }
