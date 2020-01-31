@@ -34,6 +34,7 @@
             this.txtVBCode = new System.Windows.Forms.TextBox();
             this.btnConvert = new System.Windows.Forms.Button();
             this.btnBrowseVB6AST = new System.Windows.Forms.Button();
+            this.btnTest = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lstFileNames
@@ -80,11 +81,22 @@
             this.btnBrowseVB6AST.UseVisualStyleBackColor = true;
             this.btnBrowseVB6AST.Click += new System.EventHandler(this.btnBrowseVB6AST_Click);
             // 
+            // btnTest
+            // 
+            this.btnTest.Location = new System.Drawing.Point(277, 609);
+            this.btnTest.Name = "btnTest";
+            this.btnTest.Size = new System.Drawing.Size(128, 55);
+            this.btnTest.TabIndex = 11;
+            this.btnTest.Text = "Test";
+            this.btnTest.UseVisualStyleBackColor = true;
+            this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
+            // 
             // frmCompiler
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1314, 907);
+            this.Controls.Add(this.btnTest);
             this.Controls.Add(this.btnBrowseVB6AST);
             this.Controls.Add(this.lstFileNames);
             this.Controls.Add(this.txtCSharpCode);
@@ -105,6 +117,7 @@
         private System.Windows.Forms.TextBox txtVBCode;
         private System.Windows.Forms.Button btnConvert;
         private System.Windows.Forms.Button btnBrowseVB6AST;
+        private System.Windows.Forms.Button btnTest;
     }
 }
 

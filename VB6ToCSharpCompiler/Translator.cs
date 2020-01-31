@@ -475,28 +475,79 @@ namespace VB6ToCSharpCompiler
             return method;
         }
 
-        public static string GetPath(ParseTree node)
+        public static IEnumerable<ParseTree> GetChildren(ParseTree node)
+        {
+            int c = node.getChildCount();
+            for (int i = 0; i < c; i++)
+            {
+                yield return node.getChild(i);
+            }
+        }
+
+        public static List<IndexedPath> GetExtendedPathList(ParseTree node)
+        {
+            var iterationNode = node;
+            var s = new List<IndexedPath>();
+            while (iterationNode != null)
+            {
+                var index = -1;
+                if (iterationNode.getParent() != null)
+                {
+                    var i = 0;
+                    foreach (var child in GetChildren(iterationNode.getParent()))
+                    {
+                        if (child == iterationNode)
+                        {
+                            index = i;
+                        }
+                        i++;
+                    }
+
+                    if (i == -1)
+                    {
+                        throw new InvalidOperationException("could not find child node in parent");
+                    }
+                }
+                s.Add(new IndexedPath(iterationNode.GetType().Name, index));
+                iterationNode = iterationNode.getParent();
+            }
+            s.Reverse();
+            return s;
+        }
+
+        // TODO: Reduce code duplication
+        public static List<string> GetPathList(ParseTree node)
         {
             var parent = node;
-            string s = "";
-            //var seen = new Dictionary<ParseTree, bool>();
+            var s = new List<string>();
             while (parent != null)
             {
-                s = parent.GetType().Name + "/" + s;
+                s.Add(parent.GetType().Name);
                 parent = parent.getParent();
             }
+            s.Reverse();
             return s;
+        }
+        public static List<string> GetPathList(ASGElement node)
+        {
+            var parent = node;
+            var s = new List<string>();
+            while (parent != null)
+            {
+                s.Add(parent.GetType().Name);
+                parent = parent.getParent();
+            }
+            s.Reverse();
+            return s;
+        }
+
+        public static string GetPath(ParseTree node)
+        {
+            return string.Join("/", GetPathList(node));
         }
         public static string GetPath(ASGElement node)
         {
-            var parent = node;
-            string s = "";
-            while (parent != null)
-            {
-                s = parent.GetType().Name + "/" + s;
-                parent = parent.getParent();
-            }
-            return s;
+            return string.Join("/", GetPathList(node));
         }
 
         public static string GetElementProperties(object obj)

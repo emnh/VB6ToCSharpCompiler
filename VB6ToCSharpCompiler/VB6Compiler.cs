@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using com.sun.org.apache.xpath.@internal.functions;
 using io.proleap.vb6.asg.metamodel.impl;
 using io.proleap.vb6.asg.@params.impl;
+using javax.swing.text;
 using org.antlr.runtime.tree;
 
 namespace VB6ToCSharpCompiler
@@ -45,7 +46,7 @@ namespace VB6ToCSharpCompiler
             }
         }
 
-        public static CompileResult Compile(string fileName)
+        public static CompileResult Compile(string fileName, string data = null, bool translate = true)
         {
             CompileResult returnValue = new CompileResult();
 
@@ -61,14 +62,18 @@ namespace VB6ToCSharpCompiler
                 }
             }
 
-            var code = System.IO.File.ReadAllText(fileName);
+            var code = data ?? System.IO.File.ReadAllText(fileName);
 
             returnValue.VBCode = code;
             returnValue.FileName = fileName;
 
             var inputFile = new java.io.File(fileName);
 
-            io.proleap.vb6.asg.metamodel.Program program = new io.proleap.vb6.asg.runner.impl.VbParserRunnerImpl().analyzeFile(inputFile);
+            code = code.Replace("\r", "");
+
+            io.proleap.vb6.asg.metamodel.Program program =
+                new io.proleap.vb6.asg.runner.impl.VbParserRunnerImpl().analyzeCode(code, fileName,
+                    new VbParserParamsImpl());
 
             returnValue.Program = program;
 
@@ -82,8 +87,11 @@ namespace VB6ToCSharpCompiler
                 returnValue.ModuleNames.Add(modName);
                 // TODO: use Trivia Syntax Elements?
                 returnValue.CSharpCode += "// Module Name: " + modName + "\r\n";
-                var syntaxTree = new Translator(program).Translate(program, module);
-                returnValue.CSharpCode += syntaxTree.ToFullString() + "\r\n";
+                if (translate)
+                {
+                    var syntaxTree = new Translator(program).Translate(program, module);
+                    returnValue.CSharpCode += syntaxTree.ToFullString() + "\r\n";
+                }
                 //syntaxTree.
                 //visitor.visit(((ModuleImpl)modules.get(i)).getCtx());
             }

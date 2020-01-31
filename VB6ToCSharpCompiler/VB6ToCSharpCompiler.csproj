@@ -172,8 +172,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CsharpVisitorCallback.cs" />
+    <Compile Include="CustomCSharpSyntaxWalker.cs" />
+    <Compile Include="IndexedPath.cs" />
     <Compile Include="JavaUtil.cs" />
+    <Compile Include="Pattern.cs" />
     <Compile Include="TranslatorForExpression.cs" />
+    <Compile Include="TranslatorForPattern.cs" />
     <Compile Include="VB6Compiler.cs" />
     <Compile Include="CompileResult.cs" />
     <Compile Include="frmCompiler.cs">

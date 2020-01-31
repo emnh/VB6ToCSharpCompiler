@@ -45,5 +45,13 @@ namespace VB6ToCSharpCompiler
             frmVb6AstBrowser = new frmVB6ASTBrowser(fileName);
             frmVb6AstBrowser.Visible = true;
         }
+
+        private void btnTest_Click(object sender, EventArgs e)
+        {
+            var fileName = (string)lstFileNames.SelectedItem;
+            
+            var tfp = new TranslatorForPattern();
+
+        }
     }
 }
