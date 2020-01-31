@@ -8,6 +8,7 @@ using io.proleap.vb6;
 using io.proleap.vb6.asg.metamodel;
 using io.proleap.vb6.asg.metamodel.call.impl;
 using io.proleap.vb6.asg.metamodel.impl;
+using io.proleap.vb6.asg.metamodel.statement.ifstmt.impl;
 using io.proleap.vb6.asg.metamodel.statement.@let.impl;
 using io.proleap.vb6.asg.metamodel.valuestmt.impl;
 using Microsoft.CodeAnalysis;
@@ -258,13 +259,23 @@ namespace VB6ToCSharpCompiler
 
             var callSyntax =
                 SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.IdentifierName(callName),
+                    SyntaxFactory.IdentifierName("UndefinedCall_" + callName),
                     SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(argList)));
 
             return callSyntax;
         }
 
         public ExpressionSyntax GetExpression(ArgValueAssignmentImpl asg, List<StatementSyntax> statements)
+        {
+            if (asg == null)
+            {
+                throw new ArgumentNullException(nameof(asg));
+            }
+
+            return GetFirstGoodChild(asg.getCtx(), statements);
+        }
+
+        public ExpressionSyntax GetExpression(IfConditionImpl asg, List<StatementSyntax> statements)
         {
             if (asg == null)
             {
@@ -303,6 +314,8 @@ namespace VB6ToCSharpCompiler
             var name = asg.getVariable().getName();
             return SyntaxFactory.IdentifierName(name);
         }
+
+
 
 
         public ExpressionSyntax GetExpression(ParseTree tree, List<StatementSyntax> statements)
@@ -382,9 +395,9 @@ namespace VB6ToCSharpCompiler
 
             //return SyntaxFactory.IdentifierName("Unhandled: " + tree.GetType().Name + ":" + tree.getText());
 
-            if (TranslatorForPattern.CanTranslate(tree))
+            if (TranslatorForPattern.CanTranslate(translator, tree))
             {
-                return TranslatorForPattern.Translate(this.translator, tree);
+                return TranslatorForPattern.TranslateExpression(this.translator, tree);
             }
 
             return null;

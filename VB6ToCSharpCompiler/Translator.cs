@@ -36,11 +36,27 @@ namespace VB6ToCSharpCompiler
         const string FunctionReturnValueName = "functionReturnValue";
         const string NewLine = "\r\n";
 
+        private Dictionary<ParseTree, List<ParseTree>> children;
+
         public io.proleap.vb6.asg.metamodel.Program program;
 
-        public Translator(io.proleap.vb6.asg.metamodel.Program program)
+        public Translator(CompileResult compileResult)
         {
-            this.program = program;
+            this.program = compileResult.Program;
+            children = new Dictionary<ParseTree, List<ParseTree>>();
+
+            var visitorCallback = new VisitorCallback()
+            {
+                Callback = (node, parent) =>
+                {
+                    if (!children.ContainsKey(node.getParent()))
+                    {
+                        children[node.getParent()] = new List<ParseTree>();
+                    }
+                    children[node.getParent()].Add(node);
+                }
+            };
+            VB6Compiler.Visit(compileResult, visitorCallback);
         }
 
 
@@ -221,9 +237,42 @@ namespace VB6ToCSharpCompiler
             return tfe.GetExpression(tree, statements);
         }
 
+        public static bool IsStatement(ParseTree tree)
+        {
+            if (tree == null)
+            {
+                throw new ArgumentNullException(nameof(tree));
+            }
+            return tree.GetType().Name.EndsWith("StmtContext", StringComparison.InvariantCulture);
+        }
+
+        public static bool IsStatementBlock(ParseTree tree)
+        {
+            if (tree == null)
+            {
+                throw new ArgumentNullException(nameof(tree));
+            }
+
+            return tree.GetType().Name.Contains("BlockStmtContext");
+        }
+
         public SyntaxNode TranslateNode(ParseTree tree)
         {
-            return GetExpression(tree, new List<StatementSyntax>());
+            if (Translator.IsStatementBlock(tree))
+            {
+                var statementList = new List<StatementSyntax>();
+                GetBlockStatements((VisualBasic6Parser.BlockContext) tree, statementList);
+                return SyntaxFactory.Block(SyntaxFactory.List(
+                    statementList
+                ));
+                //return 
+                //throw new InvalidOperationException("Statement inside expression. I thought this couldn't happen.");
+                //return GetStatement((VisualBasic6Parser.BlockStmtContext) tree);
+            }
+            else
+            {
+                return GetExpression(tree, new List<StatementSyntax>());
+            }
         }
 
         public ExpressionSyntax GetRightHandSide(LetImpl asg, List<StatementSyntax> statementList)
@@ -246,7 +295,8 @@ namespace VB6ToCSharpCompiler
             return assignment;
         }
 
-        public BlockSyntax GetBody(TypeSyntax returnType, VisualBasic6Parser.BlockContext block)
+        [Obsolete("We now use patterns instead")]
+        public BlockSyntax GetBodyOld(TypeSyntax returnType, VisualBasic6Parser.BlockContext block)
         {
             var comment = SyntaxFactory.Comment("// METHOD BODY");
 
@@ -347,6 +397,80 @@ namespace VB6ToCSharpCompiler
                     statementList[statementList.Count - 1] = statementList[statementList.Count - 1].WithLeadingTrivia(statementComment);
                 }
             }
+
+            var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(FunctionReturnValueName));
+            statementList.Add(returnStatement);
+
+            return SyntaxFactory.Block(SyntaxFactory.List(
+                statementList
+            ));
+        }
+
+        public List<StatementSyntax> GetStatement(ParseTree tree)
+        {
+            //var stmt = (VisualBasic6Parser.BlockStmtContext)tree;
+            var returnValue = new List<StatementSyntax>();
+
+            if (tree is VisualBasic6Parser.VariableStmtContext context)
+            {
+                var variableDeclarations = GetVariableDeclaration(context);
+                returnValue.AddRange(variableDeclarations);
+            }
+            else if (TranslatorForPattern.CanTranslate(this, tree))
+            {
+                var translation = TranslatorForPattern.Translate(this, tree);
+                if (translation is StatementSyntax translationStatement)
+                {
+                    returnValue.Add(translationStatement);
+                }
+                else
+                {
+                    //Console.Error.WriteLine("Translation: " + translation.ToFullString());
+                    returnValue.Add(SyntaxFactory.ExpressionStatement((ExpressionSyntax) translation));
+                }
+            }
+            else
+            {
+                var explanation = "// " + tree.GetType().Name + " not in [" + TranslatorForPattern.DocPatterns() + "]" + NewLine;
+                returnValue.Add(SyntaxFactory.EmptyStatement()
+                    .WithLeadingTrivia(SyntaxFactory.Comment(explanation + "/* NOT TRANSLATED: " + NewLine + tree.getText() + " */")));
+            }
+            return returnValue;
+        }
+
+        // TODO: fix inconsistent void instead of return list
+        public void GetBlockStatements(VisualBasic6Parser.BlockContext block, List<StatementSyntax> statementList)
+        //public void GetBlockStatement(TypeSyntax returnType, VisualBasic6Parser.BlockContext block, List<StatementSyntax> statementList)
+        {
+            if (block != null)
+            {
+                foreach (var stmt in block.blockStmt().JavaListToCSharpList<VisualBasic6Parser.BlockStmtContext>())
+                {
+                    foreach (var child in GetChildren(stmt))
+                    {
+                        statementList.AddRange(GetStatement(child));
+                        /*
+                        var statementComment = SyntaxFactory.Comment("// " + child.getText());
+                        statementList[statementList.Count - 1] = statementList[statementList.Count - 1].WithLeadingTrivia(statementComment);
+                        */
+                    }
+                }
+            }
+        }
+
+        public BlockSyntax GetBody(TypeSyntax returnType, VisualBasic6Parser.BlockContext block)
+        {
+            var comment = SyntaxFactory.Comment("// METHOD BODY");
+
+            var statementList = new List<StatementSyntax>
+            {
+                // TODO: Don't do it if only returning at end of function
+                GetReturnValueDeclaration(returnType),
+
+                SyntaxFactory.EmptyStatement().WithLeadingTrivia(comment)
+            };
+
+            GetBlockStatements(block, statementList);
 
             var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(FunctionReturnValueName));
             statementList.Add(returnStatement);
@@ -480,16 +604,32 @@ namespace VB6ToCSharpCompiler
             return method;
         }
 
-        public static IEnumerable<ParseTree> GetChildren(ParseTree node)
+        public List<ParseTree> GetChildren(ParseTree node)
         {
+            if (node == null)
+            {
+                throw new ArgumentNullException(nameof(node));
+            }
+            if (children.ContainsKey(node))
+            {
+                return children[node];
+            }
+
+            throw new InvalidOperationException("No such node. Maybe wrong translator object for node?");
+            /*
             int c = node.getChildCount();
             for (int i = 0; i < c; i++)
             {
-                yield return node.getChild(i);
-            }
+                // TODO: does getChild lookup all descendants? if so optimize.. XXX
+                var child = node.getChild(i);
+                if (child.getParent() == node)
+                {
+                    yield return child;
+                }
+            }*/
         }
 
-        public static List<IndexedPath> GetExtendedPathList(ParseTree node)
+        public List<IndexedPath> GetExtendedPathList(ParseTree node)
         {
             var iterationNode = node;
             var s = new List<IndexedPath>();
@@ -504,11 +644,12 @@ namespace VB6ToCSharpCompiler
                         if (child == iterationNode)
                         {
                             index = i;
+                            break;
                         }
                         i++;
                     }
 
-                    if (i == -1)
+                    if (index == -1)
                     {
                         throw new InvalidOperationException("could not find child node in parent");
                     }

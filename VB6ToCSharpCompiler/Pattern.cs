@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using com.ibm.icu.text;
 using com.sun.org.apache.xpath.@internal.compiler;
 using ikvm.extensions;
+using io.proleap.vb6.asg.metamodel;
 using io.proleap.vb6.asg.metamodel.statement.print;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 using org.antlr.v4.runtime.tree;
 using SyntaxTree = org.antlr.v4.runtime.tree.SyntaxTree;
 
@@ -20,10 +23,13 @@ namespace VB6ToCSharpCompiler
     {
         // TODO: implement unused PatternIdentifiers, null paths etc
         private string[] PatternIdentifiers;
+
         /*= new string[] {
             "A", "B"
         };*/
         private const string Content = "$CONTENT";
+
+        //private Translator translator;
 
         public string vbASGType { get; set; }
         private string vbString;
@@ -37,6 +43,7 @@ namespace VB6ToCSharpCompiler
 
         // TODO: set cutDepth by parsing wrapper code
         private int cutDepthofDollarContent = 8;
+
         private string vbWrapper = @"
 public Sub MySub()
 $CONTENT
@@ -49,32 +56,42 @@ End Sub
             this.csharpString = csharpString;
 
             VbCompiledPattern = VbParsePattern(vbString);
-            CsharpParsedPattern = CSharpParsePattern(csharpString);
+            //CsharpParsedPattern = CSharpParsePattern(csharpString);
             Console.Error.WriteLine("ASGType: " + vbASGType);
             foreach (var path in VbPaths)
             {
                 Console.Error.WriteLine("Path: " + PrintPath(path));
             }
+
+            /*
             foreach (var path in CSharpPaths)
             {
                 Console.Error.WriteLine("Path: " + PrintPath(path));
             }
+            */
         }
 
         public string[] GetIdentifiers(CompileResult compileResult)
         {
             var identifiers = new List<string>();
 
+            var seen = new Dictionary<string, bool>();
+
             var visitorCallback = new VisitorCallback()
             {
                 Callback = (node, parent) =>
                 {
-                    if (node.GetType().Name == "AmbiguousIdentifierContext")
+                    //if (node.GetType().Name == "AmbiguousIdentifierContext")
+                    var identifier = node.getText().Trim('"').Trim();
+                    if (identifier.Length == 1 && identifier.All(char.IsUpper))
                     {
-                        var identifier = node.getText().Trim('"').Trim();
-                        if (identifier != "MySub" && identifier != "Z")
+                        if (!seen.ContainsKey(identifier))
                         {
-                            identifiers.Add(identifier);
+                            seen[identifier] = true;
+                            if (identifier != "MySub" && identifier != "Z")
+                            {
+                                identifiers.Add(identifier);
+                            }
                         }
                     }
                 }
@@ -83,30 +100,57 @@ End Sub
             return identifiers.ToArray();
         }
 
-        public string PrintPath(List<IndexedPath> path)
+        public static string PrintPath(List<IndexedPath> path)
         {
             var list = new List<string>();
             foreach (var item in path)
             {
                 list.Add(item.NodeTypeName + ":" + item.ChildIndex);
             }
+
             return string.Join("/", list);
         }
 
-        ParseTree LookupNodeFromPath(ParseTree root, List<IndexedPath> path)
+        static ParseTree LookupNodeFromPath(Translator translator, ParseTree root, List<IndexedPath> path, bool justCheck = false)
         {
             ParseTree node = root;
             foreach (var indexedPath in path)
             {
-                var child = node.getChild(indexedPath.ChildIndex);
+                //var child = node.getChild(indexedPath.ChildIndex);
+
+                var children = translator.GetChildren(node);
+                if (!(indexedPath.ChildIndex >= 0 && indexedPath.ChildIndex < children.Count))
+                {
+                    Console.Error.WriteLine("Did not find child: " + PrintPath(path) + " in " + root.getText());
+                    if (justCheck)
+                    {
+                        return null;
+                    }
+                }
+                var child = children[indexedPath.ChildIndex];
+
                 var last = indexedPath == path[path.Count - 1];
                 if (!last && child.GetType().Name != indexedPath.NodeTypeName)
                 {
+                    if (justCheck)
+                    {
+                        return null;
+                    }
                     throw new InvalidOperationException("child type doesn't match");
                 }
+
                 node = child;
             }
-            
+
+            if (node == null)
+            {
+                if (justCheck)
+                {
+                    return null;
+                }
+                throw new InvalidOperationException(nameof(node) + " was null");
+            }
+
             return node;
         }
 
@@ -120,20 +164,27 @@ End Sub
             var paths = new List<IndexedPath>[PatternIdentifiers.Length];
             ParseTree root = null;
 
+            Console.Error.WriteLine("PATTERN: " + vbString);
+
+            Translator translator = new Translator(compileResult);
+
             var visitorCallback = new VisitorCallback()
             {
                 Callback = (node, parent) =>
                 {
+                    Console.Error.WriteLine("Node: " + PrintPath(translator.GetExtendedPathList(node)));
+
                     if (root == null)
                     {
                         root = node;
                     }
+
                     var i = 0;
                     foreach (var identifier in PatternIdentifiers)
                     {
                         if (node.getText().Trim('"') == identifier)
                         {
-                            var path = Translator.GetExtendedPathList(node);
+                            var path = translator.GetExtendedPathList(node);
                             if (paths[i] == null)
                             {
                                 paths[i] = path;
@@ -153,9 +204,10 @@ End Sub
                 {
                     throw new InvalidOperationException(nameof(path) + " is null");
                 }
+
                 minDepth = Math.Min(minDepth, path.Count);
             }
-            
+
             /*
             var lowestCommonDepth = 0;
             for (int i = 0; i < minDepth; i++)
@@ -180,6 +232,13 @@ End Sub
             }*/
 
             var lowestCommonDepth = cutDepthofDollarContent;
+            var cutDepth = lowestCommonDepth + 1;
+            //if (Translator.IsStatement(root))
+            if (!vbString.Contains(("Z =")))
+            {
+                lowestCommonDepth--;
+                cutDepth = lowestCommonDepth + 1;
+            }
 
             vbASGType = paths[0][lowestCommonDepth].NodeTypeName;
 
@@ -188,10 +247,11 @@ End Sub
             foreach (var path in paths)
             {
                 var cutPath = new List<IndexedPath>();
-                for (int i = lowestCommonDepth + 1; i < path.Count; i++)
+                for (int i = cutDepth; i < path.Count; i++)
                 {
                     cutPath.Add(path[i]);
                 }
+
                 cutPaths[k] = cutPath;
                 k++;
             }
@@ -217,6 +277,7 @@ End Sub
                         {
                             index = i;
                         }
+
                         i++;
                     }
 
@@ -225,13 +286,16 @@ End Sub
                         throw new InvalidOperationException("could not find child node in parent");
                     }
                 }
+
                 s.Add(new IndexedPath(iterationNode.GetType().Name, index));
                 iterationNode = iterationNode.Parent;
             }
+
             s.Reverse();
             return s;
         }
 
+        [Obsolete("We changed to string rewriting so this method is not needed")]
         public SyntaxTree CSharpParsePattern(string pattern)
         {
             var tree = SyntaxFactory.ParseExpression(pattern);
@@ -249,6 +313,7 @@ End Sub
                     {
                         root = node;
                     }
+
                     var i = 0;
                     foreach (var identifier in PatternIdentifiers)
                     {
@@ -261,11 +326,12 @@ End Sub
                                 paths[i] = path;
                             }
                         }
+
                         i++;
                     }
                 }
             };
-            
+
             var walker = new CustomCSharpSyntaxWalker(callback);
             walker.Visit(tree);
 
@@ -311,10 +377,50 @@ End Sub
 
         public string GetUniqueIdentifier(string identifier)
         {
-            return identifier + "NobodyShouldConflictWithThis";
+            return identifier + "ZnobodyZshouldZconflictZwithZthis";
         }
 
-        public ExpressionSyntax Translate(Translator translator, ParseTree tree)
+
+        public ExpressionSyntax TranslateExpression(Translator translator, ParseTree tree)
+        {
+            return (ExpressionSyntax) Translate(translator, tree);
+        }
+
+        // Checks if all pattern identifier variables can be found in tree
+        public bool CanTranslate(Translator translator, ParseTree tree)
+        {
+            bool canTranslate = true;
+            foreach (var path in VbPaths)
+            {
+                var node = LookupNodeFromPath(translator, tree, path, true);
+                if (node == null)
+                {
+                    canTranslate = false;
+                    break;
+                }
+            }
+            return canTranslate;
+        }
+
+        void DebugDumpCSharpSyntax(SyntaxNode tree)
+        {
+            if (tree == null)
+            {
+                throw new ArgumentNullException(nameof(tree));
+            }
+            var callback = new CsharpVisitorCallback()
+            {
+                Callback = node =>
+                {
+                    Console.Error.WriteLine("Node: " + node.Kind() + ": " + node.ToFullString());
+                }
+            };
+
+            var walker = new CustomCSharpSyntaxWalker(callback);
+            walker.Visit(tree);
+        }
+
+        public SyntaxNode Translate(Translator translator, ParseTree tree)
         {
             if (translator == null)
             {
@@ -333,29 +439,51 @@ End Sub
             }
 
             var translations = new SyntaxTree[PatternIdentifiers.Length];
-            var i = 0;
-            foreach (var path in VbPaths)
+            var pathIndex = 0;
+            foreach (var identifier in PatternIdentifiers)
             {
-                var node = LookupNodeFromPath(tree, path);
-                var identifier = PatternIdentifiers[i];
+                var path = VbPaths[pathIndex];
+
+                var node = LookupNodeFromPath(translator, tree, path);
+
+                Console.Error.WriteLine(
+                    "Extracting Identifier: " + identifier + " with path " +
+                        PrintPath(path) + " for code " + tree.getText());
                 var translated = translator.TranslateNode(node);
+
+                var uid = GetUniqueIdentifier(identifier);
                 if (translated != null)
                 {
-                    replacement = replacement.replace(GetUniqueIdentifier(identifier), translated.NormalizeWhitespace().ToFullString());
+                    DebugDumpCSharpSyntax(translated);
+                    Console.Error.WriteLine("Extracted: " + translated.NormalizeWhitespace().ToFullString());
+                    replacement = replacement.replace(uid, translated.NormalizeWhitespace().ToFullString());
                 }
                 else
                 {
-                    replacement = replacement.replace(GetUniqueIdentifier(identifier), "UNTRANSLATED(" + node.getText().Trim() + ")");
+                    replacement = replacement.replace(
+                        uid,
+                        "UNTRANSLATED_ " + node.GetType().Name +
+                        " ASG: " + translator.GetAsg<ASGElement>(node)?.GetType()?.Name +
+                        "Identifier: " + identifier + "Path: " + PrintPath(path) +
+                        "(" + node.getText().Trim() + ")");
                 }
                 
                 //translations[i] = translated;
-                i++;
+                pathIndex++;
             }
             
             // TODO: what about SyntaxFactory.ParseStatement()? add support for it.
-            var rewritten = SyntaxFactory.ParseExpression(replacement);
+            SyntaxNode rewritten = null;
+            if (Translator.IsStatement(tree))
+            {
+                rewritten = SyntaxFactory.ParseStatement(replacement);
+            }
+            else
+            {
+                rewritten = SyntaxFactory.ParseExpression(replacement);
+            }
 
-            return rewritten;
+            return rewritten.NormalizeWhitespace();
         }
 
     }

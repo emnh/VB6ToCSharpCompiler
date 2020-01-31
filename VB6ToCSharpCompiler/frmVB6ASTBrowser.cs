@@ -34,7 +34,7 @@ namespace VB6ToCSharpCompiler
 
             var nodeMap = new Dictionary<ParseTree, TreeNode>();
             
-            translator = new Translator(compileResult.Program);
+            translator = new Translator(compileResult);
 
             var visitorCallback = new VisitorCallback()
             {
