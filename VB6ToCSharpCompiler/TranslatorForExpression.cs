@@ -58,26 +58,14 @@ namespace VB6ToCSharpCompiler
         {
             var tree = asg.getCtx();
 
-            //var callName = asg.getCall().getName();
             var callName = asg.getApiProcedure().getName();
-
-            //statements.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(SyntaxFactory.Comment("// NAME 2: " + apiName)));
-            //AddDebugInfo(tree, statements);
 
             var argList = new List<ArgumentSyntax>();
 
-            /*foreach (var childAsg in asg.getChildren().JavaListToCSharpList<ASGElement>())
-            {
-                
-            }*/
             for (int i = 0; i < tree.getChildCount(); i++)
             {
                 var child = tree.getChild(i);
 
-                /*if (GetAsg<ASGElement>(child) == null)
-                {
-                    continue;
-                }*/
                 if (child is VisualBasic6Parser.ArgsCallContext)
                 {
                     for (int j = 0; j < child.getChildCount(); j++)
@@ -138,15 +126,15 @@ namespace VB6ToCSharpCompiler
             }
             else if (asg.getCtx().INTEGERLITERAL() != null)
             {
-                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(asg.getValue()));
+                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(Int32.Parse(asg.getValue())));
             }
             else if (asg.getCtx().DOUBLELITERAL() != null)
             {
-                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(asg.getValue()));
+                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(Double.Parse(asg.getValue())));
             }
             else if (asg.getCtx().FILENUMBER() != null)
             {
-                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(asg.getValue()));
+                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(Int32.Parse(asg.getValue())));
             }
             else if (asg.getCtx().COLORLITERAL() != null)
             {
@@ -184,17 +172,94 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(ArgCallImpl asg, List<StatementSyntax> statements)
         {
-            /*
+            
             if (asg == null)
             {
                 throw new ArgumentNullException(nameof(asg));
             }
 
-            return GetFirstGoodChild(asg.getCtx(), statements);
-            */
-            //return GetExpression(asg.getArg().getCtx(), statements);
-            
             return SyntaxFactory.IdentifierName(asg.getArg().getName());
+        }
+
+        public ExpressionSyntax GetExpression(StringValueStmtImpl asg, List<StatementSyntax> statements)
+        {
+            var ctx = asg.getCtx();
+            var children = GetGoodChildren(asg.getCtx(), statements);
+            if (children.Count < 2)
+            {
+                throw new NotImplementedException("String add < 2: " + ctx.GetType().Name + ": " + ctx.getText());
+            }
+            return SyntaxFactory.BinaryExpression(SyntaxKind.AddExpression, children[0], children[1]);
+        }
+
+        public ExpressionSyntax GetExpression(ArithmeticValueStmtImpl asg, List<StatementSyntax> statements)
+        {
+            var ctx = asg.getCtx();
+            var children = GetGoodChildren(asg.getCtx(), statements);
+            if (children.Count < 2)
+            {
+                throw new NotImplementedException("Arithmetic < 2: " + ctx.GetType().Name + ": " + ctx.getText());
+            }
+            if (ctx is VisualBasic6Parser.VsMinusContext)
+            {
+                return SyntaxFactory.BinaryExpression(SyntaxKind.SubtractExpression, children[0], children[1]);
+            //} else if (ctx is VisualBasic6Parser.VsPlusContext)
+            //{
+            //    return SyntaxFactory.BinaryExpression(SyntaxKind.PlusToken, children[0], children[1]);
+            } else if (ctx is VisualBasic6Parser.VsAddContext)
+            {
+                return SyntaxFactory.BinaryExpression(SyntaxKind.AddExpression, children[0], children[1]);
+            }
+            else if (ctx is VisualBasic6Parser.VsMultContext)
+            {
+                return SyntaxFactory.BinaryExpression(SyntaxKind.MultiplyExpression, children[0], children[1]);
+            }
+            else if (ctx is VisualBasic6Parser.VsDivContext)
+            {
+                return SyntaxFactory.BinaryExpression(SyntaxKind.DivideExpression, children[0], children[1]);
+            }
+            else
+            {
+                throw new NotImplementedException("Arithmetic: " + ctx.GetType().Name + ": " + ctx.getText());
+            }
+        }
+
+        // TODO: make sure all calls are resolving
+        public ExpressionSyntax GetExpression(UndefinedCallImpl asg, List<StatementSyntax> statements)
+        {
+            var tree = asg.getCtx();
+
+            var callName = asg.getName();
+
+            var argList = new List<ArgumentSyntax>();
+
+            for (int i = 0; i < tree.getChildCount(); i++)
+            {
+                var child = tree.getChild(i);
+
+                if (child is VisualBasic6Parser.ArgsCallContext)
+                {
+                    for (int j = 0; j < child.getChildCount(); j++)
+                    {
+                        var argChild = child.getChild(j);
+                        if (argChild != null)
+                        {
+                            var expr = GetExpression(argChild, statements);
+                            if (expr != null)
+                            {
+                                argList.Add(SyntaxFactory.Argument(expr));
+                            }
+                        }
+                    }
+                }
+            }
+
+            var callSyntax =
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.IdentifierName(callName),
+                    SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(argList)));
+
+            return callSyntax;
         }
 
         public ExpressionSyntax GetExpression(ArgValueAssignmentImpl asg, List<StatementSyntax> statements)
@@ -289,12 +354,12 @@ namespace VB6ToCSharpCompiler
             }
 
             // For debugging
-            translator.AddDebugInfo(tree, statements);
-            for (int i = 0; i < tree.getChildCount(); i++)
-            {
-                var child = tree.getChild(i);
-                GetExpression(child, statements);
-            }
+            //translator.AddDebugInfo(tree, statements);
+            //for (int i = 0; i < tree.getChildCount(); i++)
+            //{
+            //    var child = tree.getChild(i);
+            //    GetExpression(child, statements);
+            //}
 
             //}
             /*
@@ -309,9 +374,9 @@ namespace VB6ToCSharpCompiler
             }
             */
 
-            var comment = "// Unhandled GetExpression: " + tree.GetType().Name + ":" + tree.getText();
-            statements.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(
-                SyntaxFactory.Comment(comment)));
+            //var comment = "// Unhandled GetExpression: " + tree.GetType().Name + ":" + tree.getText();
+            //statements.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(
+            //    SyntaxFactory.Comment(comment)));
 
             //return SyntaxFactory.IdentifierName("Unhandled: " + tree.GetType().Name + ":" + tree.getText());
             return null;

@@ -257,7 +257,7 @@ namespace VB6ToCSharpCompiler
             {
                 foreach (var stmt in block.blockStmt().JavaListToCSharpList<VisualBasic6Parser.BlockStmtContext>())
                 {
-                    statementList.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(SyntaxFactory.Comment("// " + stmt.getText())));
+                    // statementList.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(SyntaxFactory.Comment("// " + stmt.getText())));
                     if (stmt.variableStmt() != null)
                     {
                         var variableDeclarations = GetVariableDeclaration(stmt.variableStmt());
@@ -338,6 +338,8 @@ namespace VB6ToCSharpCompiler
                             throw;
                         }
                     }
+                    var statementComment = SyntaxFactory.Comment("// " + stmt.getText());
+                    statementList[statementList.Count - 1] = statementList[statementList.Count - 1].WithLeadingTrivia(statementComment);
                 }
             }
 
