@@ -50,7 +50,7 @@ namespace VB6ToCSharpCompiler
         {
             var fileName = (string)lstFileNames.SelectedItem;
             
-            var tfp = new TranslatorForPattern();
+            //var tfp = new TranslatorForPattern();
 
         }
     }

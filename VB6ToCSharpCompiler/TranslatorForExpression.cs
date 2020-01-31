@@ -192,6 +192,7 @@ namespace VB6ToCSharpCompiler
             return SyntaxFactory.BinaryExpression(SyntaxKind.AddExpression, children[0], children[1]);
         }
 
+        /*
         public ExpressionSyntax GetExpression(ArithmeticValueStmtImpl asg, List<StatementSyntax> statements)
         {
             var ctx = asg.getCtx();
@@ -223,6 +224,7 @@ namespace VB6ToCSharpCompiler
                 throw new NotImplementedException("Arithmetic: " + ctx.GetType().Name + ": " + ctx.getText());
             }
         }
+        */
 
         // TODO: make sure all calls are resolving
         public ExpressionSyntax GetExpression(UndefinedCallImpl asg, List<StatementSyntax> statements)
@@ -379,6 +381,12 @@ namespace VB6ToCSharpCompiler
             //    SyntaxFactory.Comment(comment)));
 
             //return SyntaxFactory.IdentifierName("Unhandled: " + tree.GetType().Name + ":" + tree.getText());
+
+            if (TranslatorForPattern.CanTranslate(tree))
+            {
+                return TranslatorForPattern.Translate(this.translator, tree);
+            }
+
             return null;
         }
     }

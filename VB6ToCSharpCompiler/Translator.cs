@@ -215,10 +215,15 @@ namespace VB6ToCSharpCompiler
         }
 
         
-        ExpressionSyntax GetExpression(ParseTree tree, List<StatementSyntax> statements)
+        public ExpressionSyntax GetExpression(ParseTree tree, List<StatementSyntax> statements)
         {
             var tfe = new TranslatorForExpression(this);
             return tfe.GetExpression(tree, statements);
+        }
+
+        public SyntaxNode TranslateNode(ParseTree tree)
+        {
+            return GetExpression(tree, new List<StatementSyntax>());
         }
 
         public ExpressionSyntax GetRightHandSide(LetImpl asg, List<StatementSyntax> statementList)
