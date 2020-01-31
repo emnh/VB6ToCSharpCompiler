@@ -173,6 +173,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="JavaUtil.cs" />
+    <Compile Include="TranslatorForExpression.cs" />
     <Compile Include="VB6Compiler.cs" />
     <Compile Include="CompileResult.cs" />
     <Compile Include="frmCompiler.cs">

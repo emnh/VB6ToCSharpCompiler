@@ -1,24 +1,48 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
+using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using com.ibm.icu.util;
 using com.sun.org.apache.bcel.@internal.classfile;
 using com.sun.org.apache.xpath.@internal.functions;
+using com.sun.tools.classfile;
 using io.proleap.vb6;
+using io.proleap.vb6.asg.metamodel;
+using io.proleap.vb6.asg.metamodel.call.impl;
 using io.proleap.vb6.asg.metamodel.impl;
 using io.proleap.vb6.asg.metamodel.statement.function.impl;
+using io.proleap.vb6.asg.metamodel.statement.@let.impl;
 using io.proleap.vb6.asg.metamodel.statement.sub.impl;
+using io.proleap.vb6.asg.metamodel.valuestmt;
+using io.proleap.vb6.asg.metamodel.valuestmt.impl;
+using javax.management.openmbean;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using org.antlr.v4.runtime.tree;
+using sun.security.util;
+using Type = System.Type;
 
 namespace VB6ToCSharpCompiler
 {
-    public static class Translator
+    public class Translator
     {
+
+        const string FunctionReturnValueName = "functionReturnValue";
+        const string NewLine = "\r\n";
+
+        public io.proleap.vb6.asg.metamodel.Program program;
+
+        public Translator(io.proleap.vb6.asg.metamodel.Program program)
+        {
+            this.program = program;
+        }
+
 
         public static string TranslateType(string vbType)
         {
@@ -47,11 +71,12 @@ namespace VB6ToCSharpCompiler
                 case "Form":
                     return "Form";
             }
+
             //return "UknownType_" + vbType;
             return vbType;
         }
 
-        [Obsolete]
+        [Obsolete("We use ASG, not parser context.")]
         public static string LookupType(VisualBasic6Parser.TypeContext typeContext)
         {
             if (typeContext == null)
@@ -66,6 +91,7 @@ namespace VB6ToCSharpCompiler
                     return typeof(bool).Name;
                 }
             }
+
             return "unknownType";
         }
 
@@ -80,13 +106,18 @@ namespace VB6ToCSharpCompiler
         }
 
 
-        public static List<LocalDeclarationStatementSyntax> GetVariableDeclaration(io.proleap.vb6.asg.metamodel.Program program,
-            VisualBasic6Parser.VariableStmtContext stmt)
+        public List<LocalDeclarationStatementSyntax> GetVariableDeclaration(
+            VisualBasic6Parser.VariableStmtContext statement)
         {
-            var a = stmt.variableListStmt();
+            if (statement == null)
+            {
+                throw new ArgumentNullException(nameof(statement));
+            }
+
+            var a = statement.variableListStmt();
             var declarations = new List<LocalDeclarationStatementSyntax>();
 
-            var listStmt = stmt.variableListStmt();
+            var listStmt = statement.variableListStmt();
 
             /*
             
@@ -97,7 +128,8 @@ namespace VB6ToCSharpCompiler
             var declTypeName = LookupType(asg.getType());
             */
 
-            foreach (var varDecl in listStmt.variableSubStmt().JavaListToCSharpList<VisualBasic6Parser.VariableSubStmtContext>())
+            foreach (var varDecl in listStmt.variableSubStmt()
+                .JavaListToCSharpList<VisualBasic6Parser.VariableSubStmtContext>())
             {
                 var asgSub = (VariableImpl) program.getASGElementRegistry().getASGElement(varDecl);
 
@@ -109,7 +141,7 @@ namespace VB6ToCSharpCompiler
 
                 var variables =
                     SyntaxFactory.SeparatedList<VariableDeclaratorSyntax>(
-                        new List<VariableDeclaratorSyntax> { SyntaxFactory.VariableDeclarator(name) }
+                        new List<VariableDeclaratorSyntax> {SyntaxFactory.VariableDeclarator(name)}
                     );
 
                 //variables.Add(SyntaxFactory.VariableDeclarator("blah"));
@@ -122,16 +154,104 @@ namespace VB6ToCSharpCompiler
 
                 declarations.Add(declaration);
             }
+
             return declarations;
         }
 
-        public static BlockSyntax GetBody(io.proleap.vb6.asg.metamodel.Program program, VisualBasic6Parser.BlockContext block)
+        public void AddDebugInfo(ParseTree statement, List<StatementSyntax> statements)
+        {
+            if (statement == null)
+            {
+                throw new ArgumentNullException(nameof(statement));
+            }
+
+            if (statements == null)
+            {
+                throw new ArgumentNullException(nameof(statements));
+            }
+
+            var asg = program.getASGElementRegistry().getASGElement(statement);
+
+            var asgParent = program.getASGElementRegistry().getASGElement(statement.getParent());
+            string parentTypeName = asgParent != null ? asgParent.GetType().Name + "/" : "";
+
+            if (asg != null)
+            {
+                var type = asg.GetType();
+                var typeName = type.Name;
+                statements.Add(SyntaxFactory.EmptyStatement()
+                    .WithLeadingTrivia(
+                        SyntaxFactory.Comment("// TypeName: " + parentTypeName + typeName + ": " +
+                                              statement.getText())));
+            }
+        }
+
+        public StatementSyntax GetReturnValueDeclaration(TypeSyntax returnType)
+        {
+            var name = FunctionReturnValueName;
+
+            var typeName = returnType;
+
+            //Console.Error.WriteLine("VAR: " + declName + " " + declTypeName + " " + name + " " + typeName);
+
+            var variables =
+                SyntaxFactory.SeparatedList<VariableDeclaratorSyntax>(
+                    new List<VariableDeclaratorSyntax> {SyntaxFactory.VariableDeclarator(name)}
+                );
+
+            //variables.Add(SyntaxFactory.VariableDeclarator("blah"));
+
+            var declaration = SyntaxFactory
+                .LocalDeclarationStatement(
+                    SyntaxFactory
+                        .VariableDeclaration(returnType, variables));
+
+            return declaration;
+        }
+
+        public T GetAsg<T>(ParseTree tree)
+        {
+            return (T) program.getASGElementRegistry().getASGElement(tree);
+        }
+
+        
+        ExpressionSyntax GetExpression(ParseTree tree, List<StatementSyntax> statements)
+        {
+            var tfe = new TranslatorForExpression(this);
+            return tfe.GetExpression(tree, statements);
+        }
+
+        public ExpressionSyntax GetRightHandSide(LetImpl asg, List<StatementSyntax> statementList)
+        {
+            var right = GetExpression(asg.getRightHandValueStmt().getCtx(), statementList);
+            return right;
+        }
+
+        public ExpressionStatementSyntax GetAssignment(ExpressionSyntax left, ExpressionSyntax right)
+        {
+            if (right == null)
+            {
+                right = SyntaxFactory.IdentifierName("RHS_NULL");
+            }
+            var assignment =
+                SyntaxFactory.ExpressionStatement(
+                    SyntaxFactory.AssignmentExpression(
+                        SyntaxKind.SimpleAssignmentExpression,
+                        left, right));
+            return assignment;
+        }
+
+        public BlockSyntax GetBody(TypeSyntax returnType, VisualBasic6Parser.BlockContext block)
         {
             var comment = SyntaxFactory.Comment("// METHOD BODY");
 
-            var statementList = new List<StatementSyntax>();
+            var statementList = new List<StatementSyntax>
+            {
+                // TODO: Don't do it if only returning at end of function
+                GetReturnValueDeclaration(returnType),
 
-            statementList.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(comment));
+                SyntaxFactory.EmptyStatement().WithLeadingTrivia(comment)
+            };
 
             if (block != null)
             {
@@ -140,18 +260,96 @@ namespace VB6ToCSharpCompiler
                     statementList.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(SyntaxFactory.Comment("// " + stmt.getText())));
                     if (stmt.variableStmt() != null)
                     {
-                        var variableDeclarations = GetVariableDeclaration(program, stmt.variableStmt());
+                        var variableDeclarations = GetVariableDeclaration(stmt.variableStmt());
                         statementList.AddRange(variableDeclarations);
+                    }
+                    else if (stmt.letStmt() != null)
+                    {
+                        var letStmt = stmt.letStmt();
+                        var asg = (LetImpl) program.getASGElementRegistry().getASGElement(letStmt);
+                        if (asg.isSettingReturnVariable())
+                        {
+                            var left = SyntaxFactory.IdentifierName(FunctionReturnValueName);
+                            var right = GetRightHandSide(asg, statementList);
+                            statementList.Add(GetAssignment(left, right));
+                        }
+                        else
+                        {
+                            string varName =
+                                letStmt
+                                    ?.implicitCallStmt_InStmt()
+                                    ?.iCS_S_VariableOrProcedureCall()
+                                    ?.ambiguousIdentifier()
+                                    ?.IDENTIFIER(0)
+                                    ?.getSymbol()
+                                    ?.getText();
+
+                            if (varName == null)
+                            {
+                                varName = "UNKNOWN_ASSIGNMENT_STATEMENT_TARGET";
+                            }
+                            var left = SyntaxFactory.IdentifierName(varName);
+                            var right = GetRightHandSide(asg, statementList);
+                            statementList.Add(GetAssignment(left, right));
+                        }
+                    }
+                    else
+                    {
+                        // TODO: optimize if necessary
+                        try
+                        {
+                            // Get the type handle of a specified class.
+                            Type myType = stmt.GetType();
+
+                            // Get the methods of the specified class.
+                            var methods = myType.GetMethods();
+
+                            for (int i = 0; i < methods.Length; i++)
+                            {
+                                var method = methods[i];
+                                var methodParameters = method.GetParameters();
+                                if (methodParameters.Length == 0)
+                                {
+                                    var methodName = methods[i].Name;
+                                    if (methodName.EndsWith("Stmt", false, CultureInfo.CurrentCulture))
+                                    {
+                                        try
+                                        {
+                                            var ret = method.Invoke(stmt, new object[0]);
+                                            if (ret != null)
+                                            {
+                                                statementList.Add(SyntaxFactory.EmptyStatement()
+                                                    .WithLeadingTrivia(SyntaxFactory.Comment(
+                                                        "// Statement Type: " + methodName + ":" +
+                                                        (ret != null).ToString())));
+                                            }
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Console.WriteLine("Exception : {0} ", e.Message);
+                                        }
+                                    }
+                                }
+                                
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            throw;
+                        }
                     }
                 }
             }
 
-            return SyntaxFactory.Block(SyntaxFactory.List<StatementSyntax>(
+            var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(FunctionReturnValueName));
+            statementList.Add(returnStatement);
+
+            return SyntaxFactory.Block(SyntaxFactory.List(
                 statementList
             ));
         }
 
-        public static List<MethodDeclarationSyntax> GetMethods(io.proleap.vb6.asg.metamodel.Program program, VisualBasic6Parser.ModuleBodyContext vb6Body)
+        public List<MethodDeclarationSyntax> GetMethods(VisualBasic6Parser.ModuleBodyContext vb6Body)
         {
             var methods = new List<MethodDeclarationSyntax>();
 
@@ -164,11 +362,6 @@ namespace VB6ToCSharpCompiler
             if (vb6Body == null)
             {
                 throw new ArgumentNullException(nameof(vb6Body));
-            }
-
-            if (program == null)
-            {
-                throw new ArgumentNullException(nameof(program));
             }
 
             foreach (var element in vb6Body.moduleBodyElement().JavaListToCSharpList<VisualBasic6Parser.ModuleBodyElementContext>())
@@ -192,7 +385,7 @@ namespace VB6ToCSharpCompiler
             return methods;
         }
 
-        private static MethodDeclarationSyntax GetMethod(io.proleap.vb6.asg.metamodel.Program program, VisualBasic6Parser.ModuleBodyElementContext element,
+        private MethodDeclarationSyntax GetMethod(io.proleap.vb6.asg.metamodel.Program program, VisualBasic6Parser.ModuleBodyElementContext element,
             SyntaxList<AttributeListSyntax> attributeLists, SyntaxTokenList modifiers)
         {
             //Console.Error.WriteLine("Element Type: " + element.subStmt().GetType().Name);
@@ -268,9 +461,9 @@ namespace VB6ToCSharpCompiler
             {
                 Console.Error.WriteLine("Block is null for: " + element.toStringTree());
             }
-            
 
-            var csharpBody = GetBody(program, block);
+
+            var csharpBody = GetBody(returnType, block);
 
             var semicolonToken = SyntaxFactory.Token(SyntaxKind.SemicolonToken);
 
@@ -280,8 +473,85 @@ namespace VB6ToCSharpCompiler
             return method;
         }
 
+        public static string GetPath(ParseTree node)
+        {
+            var parent = node;
+            string s = "";
+            //var seen = new Dictionary<ParseTree, bool>();
+            while (parent != null)
+            {
+                s = parent.GetType().Name + "/" + s;
+                parent = parent.getParent();
+            }
+            return s;
+        }
+        public static string GetPath(ASGElement node)
+        {
+            var parent = node;
+            string s = "";
+            while (parent != null)
+            {
+                s = parent.GetType().Name + "/" + s;
+                parent = parent.getParent();
+            }
+            return s;
+        }
 
-        public static CompilationUnitSyntax Translate(io.proleap.vb6.asg.metamodel.Program program, ModuleImpl module)
+        public static string GetElementProperties(object obj)
+        {
+            string s = "";
+
+            var type = obj.GetType();
+
+            var methods = type.GetMethods();
+
+            for (int i = 0; i < methods.Length; i++)
+            {
+                var method = methods[i];
+                var methodParameters = method.GetParameters();
+                if (methodParameters.Length == 0)
+                {
+                    var methodName = methods[i].Name;
+                    
+                    try
+                    {
+                        var ret = method.Invoke(obj, new object[0]);
+                        if (ret != null)
+                        {
+                            s += "Prop: " + methodName + ": " + ret.GetType().Name + ": " + ret.ToString() + NewLine;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception : {0} ", e.Message);
+                    }
+                }
+
+            }
+
+            return s;
+        }
+
+
+        public string Dump(ParseTree node)
+        {
+            string s = "";
+
+            var asg = GetAsg<ASGElement>(node);
+
+            s += "Node Type Path: " + GetPath(node) + NewLine;
+            s += "ASG  Type Path: " + GetPath(asg) + NewLine;
+            s += "     Node Text: " + node.getText() + NewLine;
+            s += "Node Properties: " + GetElementProperties(node) + NewLine;
+            if (asg != null)
+            {
+                s += "ASG Properties: " + GetElementProperties(asg) + NewLine;
+            }
+
+            return s;
+        }
+
+        public CompilationUnitSyntax Translate(io.proleap.vb6.asg.metamodel.Program program, ModuleImpl module)
         {
 
             if (module == null)
@@ -292,7 +562,7 @@ namespace VB6ToCSharpCompiler
             var ctx = module.getCtx();
             var body = ctx.moduleBody();
 
-            var methods = GetMethods(program, body);
+            var methods = GetMethods(body);
 
             var classMembers = SyntaxFactory.List<MemberDeclarationSyntax>(methods);
 
