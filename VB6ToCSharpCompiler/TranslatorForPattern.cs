@@ -75,6 +75,9 @@ namespace VB6ToCSharpCompiler
                 // 5 clauses, special case
                 S("Select Case A\n Case B,J\n C\n Case D\n E\n Case F\n G\n Case Is >= K\n I\n Case Else\n L\n End Select",
                     "switch (A) { case B: case J: C; break; case D: E; case F: G; case int i when i >= K: I; break; default: L; };"),
+                // 2 clauses, double cases
+                S("Select Case A\n Case B,F\n C\n Case D,G\n E\n End Select",
+                    "switch (A) { case B: case F: C; break; case D: case G: E; break; };"),
 
                 // General cases
                 S("Mid(A, B, C) = D", "VB6Compat.SetSlice(A, B, C, D);"),
@@ -152,6 +155,8 @@ namespace VB6ToCSharpCompiler
                 S3("Exit Function", "return " + Translator.FunctionReturnValueName + ";"),
                 S("If A Then\n B\n Else\n C\n End If\n", "if (A) { B; } else { C; }"),
                 S("If A Then\n B\n End If\n", "if (A) { B; }"),
+                // Handle empty if clause
+                S("If A Then\n \n End If\n", "if (A) { ; }"),
                 S("If A Then B", "if (A) { B; }"),
                 S("If A Then B Else C", "if (A) { B; } else { C; }"),
                 S("For Each A In B\n C\n Next", CsharpCode: "foreach (var A in B) { C; }"),
