@@ -32,6 +32,11 @@ namespace VB6ToCSharpCompiler
             return new PatternText(PatternText.vbDeclaredStatementWrapper, VbCode, CsharpCode);
         }
 
+        static PatternText S3(string VbCode, string CsharpCode)
+        {
+            return new PatternText(PatternText.vbFunctionStatementWrapper, VbCode, CsharpCode);
+        }
+
         // Expression pattern
         static PatternText E(string VbCode, string CsharpCode)
         {
@@ -70,12 +75,16 @@ namespace VB6ToCSharpCompiler
                 S2("A(B) = C", "A[B] = C;"),
                 S("A = B", "A = B;"),
                 S("A:", "A:"),
-                S("Open A For Input Shared As B", "VB6Compat.OpenFile(A, B);"),
+                S("Open A For Input Shared As B", "VB6Compat.OpenFileShared(A, B);"),
+                S("Open A For Input As B", "VB6Compat.OpenFileForInput(A, B);"),
+                S("Open A For Output As B", "VB6Compat.OpenFileForOutput(A, B);"),
                 S("Close A", "VB6Compat.CloseFile(A);"),
                 S("Erase A", "VB6Compat.EraseArray(A);"),
-                S("Exit Function", "return " + Translator.FunctionReturnValueName + ";"),
+                S("Exit Sub", "return;"),
+                S3("Exit Function", "return " + Translator.FunctionReturnValueName + ";"),
                 S("If A Then\n B\n Else\n C\n End If\n", "if (A) { B; } else { C; }"),
                 S("If A Then\n B\n End If\n", "if (A) { B; }"),
+                S("For Each A In B\n C\n Next", CsharpCode: "foreach (var A in B) { C; }"),
                 //S("Select Case A\n Case B\n C\n Case D\n E\n End Select",
                 //  "switch (A) { case B: C; break; case D: E; break; };"),
                 C("A = B", @"A == B"),
@@ -89,7 +98,7 @@ namespace VB6ToCSharpCompiler
                 C("Not A", "!A"),
                 /*
                 new PatternText(
-                    PatternText.vbReturnStatementWrapper,
+                    PatternText.vbFunctionStatementWrapper,
                     "B = A",
                     Translator.FunctionReturnValueName + " = A")
                     */
@@ -110,20 +119,26 @@ namespace VB6ToCSharpCompiler
 
                 Console.Error.WriteLine(
                     "Pattern: " + patternText.LogValue() + ", " +
-                    nameof(pattern.vbTreeNodeType) + ": " + pattern.vbTreeNodeType);
+                    nameof(pattern.VbTreeNodeType) + ": " + pattern.VbTreeNodeType);
 
-                if (!compiledPatterns.ContainsKey(pattern.vbTreeNodeType))
+                if (!compiledPatterns.ContainsKey(pattern.VbTreeNodeType))
                 {
-                    compiledPatterns[pattern.vbTreeNodeType] = new List<Pattern>();
+                    compiledPatterns[pattern.VbTreeNodeType] = new List<Pattern>();
                 }
-                compiledPatterns[pattern.vbTreeNodeType].Add(pattern);
+                compiledPatterns[pattern.VbTreeNodeType].Add(pattern);
             }
 
             foreach (var pat in compiledPatterns)
             {
                 foreach (var pat2 in pat.Value)
                 {
-                    Console.Error.WriteLine("PATTERNSTATUS: " + pat2.vbString + ": " + pat2.vbTreeNodeType + ": " + pat2.GetLogPath());
+                    Console.Error.WriteLine("PATTERNSTATUS: " + pat2.VbCode + ": " + pat2.VbTreeNodeType + ": " + pat2.GetLogPath());
+                    foreach (var tki in pat2.PatternTokens)
+                    {
+                        Console.Error.WriteLine("PATTERNTOKENS: " + Pattern.PrintPath(tki.Path));
+                        Console.Error.WriteLine("PATTERNTOKENS: " +
+                                                string.Join("@", tki.Tokens));
+                    }
                 }
             }
 
@@ -152,6 +167,12 @@ namespace VB6ToCSharpCompiler
 
                 if (!canTranslate)
                 {
+                    Console.Error.WriteLine("PATTERN NODE: " + name + ", CASE: " + tree.getText());
+                    foreach (var pattern in compiledPatterns[name])
+                    {
+                        Console.Error.WriteLine("TOKENS: " + string.Join("@", pattern.PatternTokens));
+                    }
+
                     throw new InvalidOperationException("Valid patterns for case, but none of them worked.");
                 }
             }

@@ -26,6 +26,7 @@ namespace VB6ToCSharpCompiler
     {
         // TODO: implement unused PatternIdentifiers, null paths etc
         private string[] PatternIdentifiers;
+        public List<TokenInfo> PatternTokens { get; set; }
 
         /*= new string[] {
             "A", "B"
@@ -35,8 +36,8 @@ namespace VB6ToCSharpCompiler
 
         //private Translator translator;
 
-        public string vbTreeNodeType { get; set; }
-        public string vbString { get; set; }
+        public string VbTreeNodeType { get; set; }
+        public string VbCode { get; set; }
         private string csharpString;
 
         private List<IndexedPath>[] VbPaths;
@@ -45,19 +46,22 @@ namespace VB6ToCSharpCompiler
         private CompileResult VbCompiledPattern;
         private SyntaxTree CsharpParsedPattern;
 
-        private int cutDepthofContent = -1;
+        private int cutDepthOfContent = -1;
+        private int finalCutDepthOfContent = -1;
+        private List<IndexedPath> cutPath;
+        private List<IndexedPath> tokenPath;
 
         private string vbWrapperCode;
 
-        public Pattern(string vbWrapperCode, string vbString, string csharpString)
+        public Pattern(string vbWrapperCode, string vbCode, string csharpString)
         {
             this.vbWrapperCode = vbWrapperCode;
-            this.vbString = vbString;
+            this.VbCode = vbCode;
             this.csharpString = csharpString;
 
-            VbCompiledPattern = VbParsePattern(vbString);
+            VbCompiledPattern = VbParsePattern(vbCode);
             //CsharpParsedPattern = CSharpParsePattern(csharpString);
-            Console.Error.WriteLine("ASGType: " + vbTreeNodeType);
+            Console.Error.WriteLine("ASGType: " + VbTreeNodeType);
             foreach (var path in VbPaths) Console.Error.WriteLine("Path: " + PrintPath(path));
 
             /*
@@ -70,56 +74,105 @@ namespace VB6ToCSharpCompiler
 
         public string GetLogPath()
         {
-            return PrintPath(VbPaths[0]);
+            // TODO: return cutPath always?
+            if (VbPaths.Length > 0)
+            {
+                return PrintPath(VbPaths[0]);
+            }
+
+            return "CUTPATH: " + PrintPath(cutPath);
         }
 
         // This method looks up the depth of the $CONTENT identifier.
         // We use it to determine where to cut relative paths.
 
         // TODO: Parse wrapper only once, not one time per pattern. Well, it hardly matters for performance I think, so leave it.
-        public void SetCutDepth()
+        public void SetCutDepthAndCutPath()
         {
             var wrapperCompileResult = VB6Compiler.Compile("Test.bas", vbWrapperCode, false);
             var translator = new Translator(wrapperCompileResult);
-            Console.Error.WriteLine("SetCutDepth: " + vbWrapperCode);
+            Console.Error.WriteLine("SetCutDepthAndCutPath: " + vbWrapperCode);
 
             var visitorCallback = new VisitorCallback()
             {
                 Callback = (node, parent) =>
                 {
-                    Console.Error.WriteLine("SetCutDepth: " + vbString + ": " + PrintPath(translator.GetExtendedPathList(node)));
+                    
                     var identifier = node.getText().Trim('"').Trim();
                     //if (identifier == Content)
-                    if (cutDepthofContent == -1 && identifier == Content)
+                    var path = translator.GetExtendedPathList(node);
+
+                    Console.Error.WriteLine("SetCutDepthAndCutPath: " + VbCode + ": " + PrintPath(path));
+
+                    /*
+                    if (cutDepthOfContent != -1 && path.Count == cutDepthOfContent && identifier == Content)
                     {
-                        var path = translator.GetExtendedPathList(node);
+                        cutPath = path;
+                    }
+
+                    if (cutDepthOfContent == -1 && identifier == Content)
+                    {
+                        
                         // TODO: do it more elegantly
                         if (node.GetType().Name == "IfConditionStmtContext")
-                            cutDepthofContent = path.Count;
+                            cutDepthOfContent = path.Count;
                         else if (node.GetType().Name == "BlockContext")
-                            cutDepthofContent = path.Count + 1;
+                            cutDepthOfContent = path.Count + 1;
                         else if (node.GetType().Name == "BlockStmtContext")
-                            cutDepthofContent = path.Count - 1;
+                            cutDepthOfContent = path.Count - 1;
                         else if (node.GetType().Name == "VsICSContext")
-                            cutDepthofContent = path.Count - 1;
+                            cutDepthOfContent = path.Count - 1;
                         else
                         {
                             Console.Error.WriteLine(node.GetType().Name);
                             Debugger.Break();
                         }
 
-                        Console.Error.WriteLine("SetCutDepth: " + node.GetType().Name + ": " + PrintPath(path));
+                        Console.Error.WriteLine("SetCutDepthAndCutPath: " + node.GetType().Name + ": " + PrintPath(path));
+                    }
+                    */
+
+                    if (identifier == Content)
+                    {
+                        // Exact match
+                        if (path[path.Count - 1].NodeTypeName == "VsICSContext")
+                        {
+                            cutDepthOfContent = path.Count - 1;
+                            Console.Error.WriteLine("SetCutDepth: MATCH");
+                        }
+                        // Bounded
+                        if (!PathContains(path, "VsICSContext"))
+                        {
+                            cutDepthOfContent = path.Count;
+                            Console.Error.WriteLine("SetCutDepth: BOUND MATCH");
+                        }
+                        cutPath = path.Take(cutDepthOfContent).ToList();
                     }
                 }
             };
+            // First time is to set cutDepthOfContent
             VB6Compiler.Visit(wrapperCompileResult, visitorCallback);
-            if (cutDepthofContent == -1)
-                throw new InvalidOperationException(nameof(cutDepthofContent) + " not initialized");
+            // Second time is to set cutPath
+            VB6Compiler.Visit(wrapperCompileResult, visitorCallback);
+            if (cutDepthOfContent == -1)
+                throw new InvalidOperationException(nameof(cutDepthOfContent) + " not initialized");
+        }
+
+        public bool PathContains(List<IndexedPath> path, string typeName)
+        {
+            foreach (var item in path)
+            {
+                if (item.NodeTypeName == typeName)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public bool IsInsideSubOrFunction(List<IndexedPath> path)
         {
-            foreach (var item in path)
+            foreach (var item in path.Take(path.Count - 1))
             {
                 if (item.NodeTypeName == "SubStmtContext" || item.NodeTypeName == "FunctionStmtContext")
                 {
@@ -129,9 +182,11 @@ namespace VB6ToCSharpCompiler
             return false;
         }
 
-        public string[] GetIdentifiers(Translator translator, CompileResult compileResult)
+        public string[] GetIdentifiersAndSetTokens(Translator translator, CompileResult compileResult)
         {
             var identifiers = new List<string>();
+            var tokensPerNode = new List<TokenInfo>();
+            //var tokens = new List<Tuple<int, string>>();
 
             var seen = new Dictionary<string, bool>();
 
@@ -141,24 +196,75 @@ namespace VB6ToCSharpCompiler
                 {
                     //if (node.GetType().Name == "AmbiguousIdentifierContext")
                     var identifier = node.getText().Trim('"').Trim();
+
+                    
+
                     //Console.Error.WriteLine("GetIdentifier: " + identifier);
-                    if (identifier.Length == 1 &&
-                        identifier.All(char.IsUpper) &&
-                        IsInsideSubOrFunction(translator.GetExtendedPathList(node)))
+                    var path = translator.GetExtendedPathList(node);
+                    if (IsInsideSubOrFunction(path))
                     {
-                        if (!seen.ContainsKey(identifier))
+                        if (identifier.Length == 1 &&
+                            identifier.All(char.IsUpper))
                         {
-                            seen[identifier] = true;
-                            if (identifier != ReservedLetterForDiscardedResults) identifiers.Add(identifier);
+                            if (!seen.ContainsKey(identifier))
+                            {
+                                seen[identifier] = true;
+                                if (identifier != ReservedLetterForDiscardedResults) identifiers.Add(identifier);
+                            }
+                        }
+                        else
+                        {
+                            // A general method will for each token add the parent node, and its path,
+                            // then extract this path for each token, extract all tokens from path and
+                            // check that the token exists in the extracted tokens.
+                            // Does this account for the order? Partly, it accounts for the order
+                            // within different nodes, but not multiple tokens within the same node.
+                            // So to handle that we need to group tokens by node.
+
+                            var tokens = GetTokens(node);
+                            if (tokens.Count > 0)
+                            {
+                                tokenPath = tokenPath ?? path;
+                                tokensPerNode.Add(new TokenInfo(path, tokens.Select(x => x.Item2).ToList()));
+                                Console.Error.WriteLine("TOKENS" + string.Join("@", tokens));
+                            }
+                            
                         }
                     }
+                    
                 }
             };
+            
             VB6Compiler.Visit(compileResult, visitorCallback);
-            if (cutDepthofContent == -1)
-                throw new InvalidOperationException(nameof(cutDepthofContent) + " not initialized");
+
+            PatternTokens = tokensPerNode;
+
+            if (cutDepthOfContent == -1)
+                throw new InvalidOperationException(nameof(cutDepthOfContent) + " not initialized");
 
             return identifiers.ToArray();
+        }
+
+        public List<Tuple<int, string>> GetTokens(ParseTree node)
+        {
+            var tokens = new List<Tuple<int, string>>();
+            for (var i = 0; i < node.getChildCount(); i++)
+            {
+                var tk = node.getChild(i);
+                if (tk is TerminalNodeImpl tni)
+                {
+                    var sym = tni.symbol.getText().Trim();
+                    // TODO: Check if inside CONTENT rather than ignore public.
+                    if (!string.IsNullOrEmpty(sym) && sym != "public" &&
+                        sym.All(c => char.IsLetter(c) || char.IsWhiteSpace(c)))
+                    {
+                        tokens.Add(Tuple.Create(tni.getSourceInterval().a, sym));
+                    }
+                }
+            }
+            tokens.Sort((x, y) => x.Item1.CompareTo(y.Item1));
+
+            return tokens;
         }
 
         public static string PrintPath(List<IndexedPath> path)
@@ -210,23 +316,23 @@ namespace VB6ToCSharpCompiler
 
         public CompileResult VbParsePattern(string pattern)
         {
-            SetCutDepth();
+            SetCutDepthAndCutPath();
 
             var code = vbWrapperCode.Replace(Content, pattern);
             var compileResult = VB6Compiler.Compile("Test.bas", code, false);
             var translator = new Translator(compileResult);
-            PatternIdentifiers = GetIdentifiers(translator, compileResult);
+            PatternIdentifiers = GetIdentifiersAndSetTokens(translator, compileResult);
 
             var paths = new List<IndexedPath>[PatternIdentifiers.Length];
             ParseTree root = null;
 
-            Console.Error.WriteLine("PATTERN: " + vbString);
+            Console.Error.WriteLine("PATTERN: " + VbCode);
 
             var visitorCallback = new VisitorCallback()
             {
                 Callback = (node, parent) =>
                 {
-                    Console.Error.WriteLine("Node: " + PrintPath(translator.GetExtendedPathList(node)));
+                    Console.Error.WriteLine("Node: " + PrintPath(translator.GetExtendedPathList(node)) + ": " + node.getText());
 
                     if (root == null) root = node;
 
@@ -246,67 +352,49 @@ namespace VB6ToCSharpCompiler
             };
             VB6Compiler.Visit(compileResult, visitorCallback);
 
-            var minDepth = 1000;
-            foreach (var path in paths)
-            {
-                if (path == null) throw new InvalidOperationException(nameof(path) + " is null");
+            var lowestCommonDepth = -1;
+            var cutDepth = -1;
 
-                minDepth = Math.Min(minDepth, path.Count);
+            var comparePath = paths.Length > 0 ? paths[0] : tokenPath;
+            if (comparePath == null)
+            {
+                Console.Error.WriteLine("VB Code: " + VbCode);
+                throw new InvalidOperationException(nameof(comparePath) + " is null");
             }
+            int commonDepth = Math.Min(cutPath.Count, comparePath.Count);
 
-            /*
-            var lowestCommonDepth = 0;
-            for (int i = 0; i < minDepth; i++)
+            for (int i = 0; i < commonDepth; i++)
             {
-                var allEqual = true;
+                Console.Error.WriteLine("COMPARE PATHS: " + PrintPath(cutPath));
                 foreach (var path in paths)
                 {
-                    if (!path[i].Equals(paths[0][i]))
-                    {
-                        allEqual = false;
-                        break;
-                    }
+                    Console.Error.WriteLine("COMPARE PATHS: " + PrintPath(path));
                 }
-                if (allEqual)
-                {
-                    lowestCommonDepth = i;
-                }
-                else
+                Console.Error.WriteLine("");
+                if (cutPath[i].NodeTypeName != comparePath[i].NodeTypeName)
                 {
                     break;
                 }
-            }*/
-
-            var lowestCommonDepth = cutDepthofContent;
-            var cutDepth = lowestCommonDepth + 1;
-
-            //if (Translator.IsStatement(root))
-
-            /*if (!vbString.Contains(("Z =")))
-            {
-                lowestCommonDepth--;
-                cutDepth = lowestCommonDepth + 1;
-            }*/
-
-            // TODO: How to extract vbTreeNodeType when there are no identifiers, as in Exit Function for instance.
-
-            vbTreeNodeType = paths[0][lowestCommonDepth].NodeTypeName;
-            // We are not interested in this type, it is too general.
-            // Therefore we go one step deeper.
-            // It applies to member expressions, A.B.
-            // TODO: Do this in more elegant way.
-            if (vbTreeNodeType == "VsICSContext")
-            {
-                lowestCommonDepth++;
-                cutDepth = lowestCommonDepth + 1;
-                vbTreeNodeType = paths[0][lowestCommonDepth].NodeTypeName;
-                if (vbTreeNodeType == "ImplicitCallStmt_InStmtContext")
+                else
                 {
-                    lowestCommonDepth++;
-                    cutDepth = lowestCommonDepth + 1;
-                    vbTreeNodeType = paths[0][lowestCommonDepth].NodeTypeName;
+                    lowestCommonDepth = i + 1;
                 }
             }
+
+            if (lowestCommonDepth >= comparePath.Count)
+            {
+                Console.Error.WriteLine("VB Code: " + VbCode + ", Identifier: " + PatternIdentifiers[0]);
+            }
+            VbTreeNodeType = comparePath[lowestCommonDepth].NodeTypeName;
+            
+            // Skip uninteresting wrapper nodes
+            while (VbTreeNodeType == "VsICSContext" || VbTreeNodeType == "ImplicitCallStmt_InStmtContext")
+            {
+                lowestCommonDepth++;
+                VbTreeNodeType = comparePath[lowestCommonDepth].NodeTypeName;
+            }
+            cutDepth = lowestCommonDepth + 1;
+            finalCutDepthOfContent = cutDepth;
 
             var cutPaths = new List<IndexedPath>[PatternIdentifiers.Length];
             var k = 0;
@@ -447,7 +535,56 @@ namespace VB6ToCSharpCompiler
                 }
             }
 
+            if (!DoTokensMatch(translator, tree, true))
+            {
+                canTranslate = false;
+            }
+
             return canTranslate;
+        }
+
+        public bool DoTokensMatch(Translator translator, ParseTree tree, bool justCheck = false)
+        {
+            if (translator == null) throw new ArgumentNullException(nameof(translator));
+
+            if (tree == null) throw new ArgumentNullException(nameof(tree));
+
+            // TODO: Doesn't handle recursion yet.
+            /*
+            var testPattern = ".*" + string.Join(".*", PatternTokens) + ".*";
+            var rex = Regex.IsMatch(tree.getText(), testPattern);
+            Console.Error.WriteLine("TOKENMATCHING: " + tree.getText() + " against " + testPattern + " match? " + rex);
+            return rex;
+            */
+            bool returnValue = true;
+            foreach (var tokenInfo in PatternTokens)
+            {
+                if (finalCutDepthOfContent > tokenInfo.Path.Count)
+                {
+                    // In this case the tokens were part of the template, not the pattern so we should skip them.
+                    continue;
+                }
+                var tokenCutPath = tokenInfo.Path.Skip(finalCutDepthOfContent).ToList();
+                var node = LookupNodeFromPath(translator, tree, tokenCutPath, true);
+                if (node == null)
+                {
+                    Console.Error.WriteLine("UNMATCHED TOKENS 1: " + VbTreeNodeType + ":" + PrintPath(tokenCutPath) + ":" + PrintPath(tokenInfo.Path));
+                    returnValue = false;
+                    break;
+                }
+                var tokens = GetTokens(node);
+                var tokenStrings = tokens.Select(x => x.Item2).ToList();
+                if (!tokenInfo.Tokens.SequenceEqual(tokenStrings))
+                {
+                    Console.Error.WriteLine("UNMATCHED TOKENS 2: " + VbTreeNodeType + ":" + PrintPath(tokenCutPath) + ":" + PrintPath(tokenInfo.Path));
+                    Console.Error.WriteLine("PATH LENGTH COMPARISON: " + finalCutDepthOfContent + ":" + tokenInfo.Path.Count);
+                    Console.Error.WriteLine(string.Join("@", tokenInfo.Tokens));
+                    Console.Error.WriteLine(string.Join("@", tokenStrings));
+                    //return false;
+                    returnValue = false;
+                }
+            }
+            return returnValue;
         }
 
         private void DebugDumpCSharpSyntax(SyntaxNode tree)
@@ -469,13 +606,17 @@ namespace VB6ToCSharpCompiler
 
             if (tree == null) throw new ArgumentNullException(nameof(tree));
 
+            if (!DoTokensMatch(translator, tree))
+            {
+                throw new InvalidOperationException("Missing tokens. Fix CanTranslate.");
+            }
+
             var replacement = csharpString;
             // Make a long string so we don't conflict
             foreach (var identifier in PatternIdentifiers)
             {
                 replacement = Regex.Replace(replacement, "\\b" + identifier + "\\b", GetUniqueIdentifier(identifier));
             }
-                
 
             var translations = new SyntaxTree[PatternIdentifiers.Length];
             var pathIndex = 0;
