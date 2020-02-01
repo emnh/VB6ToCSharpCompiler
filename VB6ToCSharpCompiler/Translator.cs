@@ -251,7 +251,7 @@ namespace VB6ToCSharpCompiler
             {
                 throw new ArgumentNullException(nameof(tree));
             }
-            return tree.GetType().Name.EndsWith("StmtContext", StringComparison.InvariantCulture);
+            return Pattern.LookupNodeType(tree).EndsWith("StmtContext", StringComparison.InvariantCulture);
         }
 
         public static bool IsStatementBlock(ParseTree tree)
@@ -451,9 +451,14 @@ namespace VB6ToCSharpCompiler
                     returnValue.Add(SyntaxFactory.ExpressionStatement((ExpressionSyntax) translation));
                 }
             }
+            else if (GetChildren(tree).Count == 1)
+            {
+                Console.Error.WriteLine("FORWARDING STATEMENT: " + tree.getText());
+                return GetStatement(GetChildren(tree)[0]);
+            }
             else
             {
-                var explanation = "// " + tree.GetType().Name + " not in [" + TranslatorForPattern.DocPatterns() + "]" + NewLine;
+                var explanation = "// " + Pattern.LookupNodeType(tree) + " not in [" + TranslatorForPattern.DocPatterns() + "]" + NewLine;
                 returnValue.Add(SyntaxFactory.EmptyStatement()
                     .WithLeadingTrivia(SyntaxFactory.Comment(explanation + "/* NOT TRANSLATED: " + NewLine + tree.getText() + " */")));
             }
@@ -675,7 +680,7 @@ namespace VB6ToCSharpCompiler
                         throw new InvalidOperationException("could not find child node in parent");
                     }
                 }
-                s.Add(new IndexedPath(iterationNode.GetType().Name, index));
+                s.Add(new IndexedPath(Pattern.LookupNodeType(iterationNode), index));
                 iterationNode = iterationNode.getParent();
             }
             s.Reverse();
@@ -689,7 +694,7 @@ namespace VB6ToCSharpCompiler
             var s = new List<string>();
             while (parent != null)
             {
-                s.Add(parent.GetType().Name);
+                s.Add(Pattern.LookupNodeType(parent));
                 parent = parent.getParent();
             }
             s.Reverse();

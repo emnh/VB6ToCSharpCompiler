@@ -226,7 +226,7 @@ namespace VB6ToCSharpCompiler
             {
                 throw new ArgumentNullException(nameof(tree));
             }
-            var name = Pattern.LookupNodeType(tree.GetType().Name);
+            var name = Pattern.LookupNodeType(tree);
             var canTranslate = compiledPatterns.ContainsKey(name);
             if (canTranslate)
             {
@@ -270,7 +270,7 @@ namespace VB6ToCSharpCompiler
             {
                 throw new ArgumentNullException(nameof(tree));
             }
-            var name = Pattern.LookupNodeType(tree.GetType().Name);
+            var name = Pattern.LookupNodeType(tree);
             var patterns = compiledPatterns[name];
             foreach (var pattern in patterns)
             {

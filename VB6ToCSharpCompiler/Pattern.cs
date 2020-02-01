@@ -276,26 +276,32 @@ namespace VB6ToCSharpCompiler
             return string.Join("/", list);
         }
 
-        public static string LookupNodeType(string a)
+        //public static string LookupNodeType(string a)
+        public static string LookupNodeType(SyntaxNode node)
+        {
+            return node.GetType().Name;
+        }
+
+        public static string LookupNodeType(ParseTree node)
         {
             //string a2 = a == "ICS_S_VariableOrProcedureCallContext" ? "FunctionStmtContext" : a;
             //string a2 = a == "ICS_B_ProcedureCallContext" ? "SubStmtContext" : a;
             //string a2 = a == "ICS_B_ProcedureCallContext" ? "ICS_S_ProcedureOrArrayCallContext" : a;
-            string returnValue = a;
-            //returnValue = returnValue == "ImplicitCallStmt_InBlockContext" ? "SubStmtContext" : returnValue;
-            returnValue = returnValue == "ICS_B_ProcedureCallContext" ? "SubStmtContext" : returnValue;
-            //returnValue = returnValue == "ICS_B_ProcedureCallContext" ? "ICS_S_ProcedureOrArrayCallContext" : returnValue;
-            if (a == "ICS_B_ProcedureCallContext")
+            string returnValue = node.GetType().Name;
+            if (node.getText().Contains("ioFil_Slett (FilnavnTil)"))
             {
+                Console.Error.WriteLine(nameof(LookupNodeType) + ": " + returnValue + ": " + node.getText());
                 Debugger.Break();
             }
+            if (returnValue == "ICS_B_ProcedureCallContext")
+            {
+
+            }
+            //returnValue = returnValue == "ImplicitCallStmt_InBlockContext" ? "SubStmtContext" : returnValue;
+            //returnValue = returnValue == "ICS_B_ProcedureCallContext" ? "SubStmtContext" : returnValue;
+            returnValue = returnValue == "ICS_B_ProcedureCallContext" ? "ICS_S_ProcedureOrArrayCallContext" : returnValue;
             returnValue = returnValue == "CertainIdentifierContext" ? "AmbiguousIdentifierContext" : returnValue;
             return returnValue;
-        }
-
-        public static bool CompareNodeTypes(string a, string b)
-        {
-            return LookupNodeType(a) == LookupNodeType(b);
         }
 
         private static ParseTree LookupNodeFromPath(Translator translator, ParseTree root, List<IndexedPath> path,
@@ -317,7 +323,7 @@ namespace VB6ToCSharpCompiler
                 var child = children[indexedPath.ChildIndex];
 
                 var last = indexedPath == path[path.Count - 1];
-                if (!last && !CompareNodeTypes(child.GetType().Name, indexedPath.NodeTypeName))
+                if (!last && LookupNodeType(child) != indexedPath.NodeTypeName)
                 {
                     if (justCheck) return null;
 
@@ -426,8 +432,6 @@ namespace VB6ToCSharpCompiler
                 VbTreeNodeType = comparePath[lowestCommonDepth].NodeTypeName;
             }
 
-            VbTreeNodeType = LookupNodeType(VbTreeNodeType);
-
             cutDepth = lowestCommonDepth + 1;
             finalCutDepthOfContent = cutDepth;
 
@@ -467,7 +471,7 @@ namespace VB6ToCSharpCompiler
                     if (i == -1) throw new InvalidOperationException("could not find child node in parent");
                 }
 
-                s.Add(new IndexedPath(LookupNodeType(iterationNode.GetType().Name), index));
+                s.Add(new IndexedPath(LookupNodeType(iterationNode), index));
                 iterationNode = iterationNode.Parent;
             }
 
@@ -675,13 +679,13 @@ namespace VB6ToCSharpCompiler
                 }
                 else
                 {
-                    Console.Error.WriteLine("UNTRANSLATED_ " + node.GetType().Name +
+                    Console.Error.WriteLine("UNTRANSLATED_ " + LookupNodeType(node)+
                                             ", ASG: " + translator.GetAsg<ASGElement>(node)?.GetType()?.Name +
                                             ", Identifier: " + identifier + ", Path: " + PrintPath(path) +
                                             "(" + node.getText().Trim() + ")");
                     replacement = replacement.replace(
                         uid,
-                        "UNTRANSLATED_ " + node.GetType().Name);
+                        "UNTRANSLATED_ " + LookupNodeType(node));
                 }
 
                 //translations[i] = translated;

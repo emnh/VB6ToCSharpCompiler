@@ -385,7 +385,7 @@ namespace VB6ToCSharpCompiler
             var goodChildren = GetGoodChildren(tree, statements);
             if (goodChildren.Count == 1)
             {
-                Console.Error.WriteLine("FORWARDED: " + tree.GetType().Name + ": " + tree.getText());
+                Console.Error.WriteLine("FORWARDED: " + Pattern.LookupNodeType(tree) + ": " + tree.getText());
                 return goodChildren[0];
             }
 
@@ -432,8 +432,8 @@ namespace VB6ToCSharpCompiler
                 return GetFirstGoodChild(nameof(ConstantCallImpl), tree, statements);
             }
 
-            var explanation = "// " + tree.GetType().Name + " not in [" + TranslatorForPattern.DocPatterns() + "]" + Translator.NewLine;
-            Console.Error.WriteLine(nameof(GetExpression) + ": " + tree.GetType().Name + ": " + tree.getText());
+            var explanation = "// " + Pattern.LookupNodeType(tree) + " not in [" + TranslatorForPattern.DocPatterns() + "]" + Translator.NewLine;
+            Console.Error.WriteLine(nameof(GetExpression) + ": " + Pattern.LookupNodeType(tree) + ": " + tree.getText());
             Console.Error.WriteLine(explanation);
             if (asg != null)
             {

@@ -43,7 +43,7 @@ namespace VB6ToCSharpCompiler
             {
                 Callback = (node, parent) =>
                 {
-                    var name = node.GetType().Name;
+                    var name = Pattern.LookupNodeType(node);
                     var lines = node.getText().Split('\n');
                     string firstLine = (lines.Length > 0) ? lines[0] : "";
 
