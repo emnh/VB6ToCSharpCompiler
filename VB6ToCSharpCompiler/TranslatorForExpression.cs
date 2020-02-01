@@ -161,7 +161,19 @@ namespace VB6ToCSharpCompiler
             }
             else if (asg.getCtx().INTEGERLITERAL() != null)
             {
-                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(Int32.Parse(asg.getValue())));
+                if (asg.getValue().EndsWith("#"))
+                {
+                    return
+                        SyntaxFactory.LiteralExpression(
+                            SyntaxKind.NumericLiteralExpression, 
+                            SyntaxFactory.Literal(Double.Parse(asg.getValue().Replace("#", ""))));
+                }
+                else
+                {
+                    return SyntaxFactory.LiteralExpression(
+                        SyntaxKind.NumericLiteralExpression, 
+                        SyntaxFactory.Literal(Int32.Parse(asg.getValue())));
+                }
             }
             else if (asg.getCtx().DOUBLELITERAL() != null)
             {
@@ -474,6 +486,11 @@ namespace VB6ToCSharpCompiler
             } else if (tree is VisualBasic6Parser.BaseTypeContext btc)
             {
                 return HandleBaseTypeContext(btc, statements);
+            } else if (tree is VisualBasic6Parser.TypeHintContext)
+            {
+                // Ignore type hint context
+                Console.Error.WriteLine("IGNORING TYPE HINT CONTEXT");
+                return null;
             }
 
             var explanation = "// " + Pattern.LookupNodeType(tree) + " not in [" + TranslatorForPattern.DocPatterns() + "]" + Translator.NewLine;

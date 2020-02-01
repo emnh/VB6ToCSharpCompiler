@@ -676,7 +676,9 @@ namespace VB6ToCSharpCompiler
                                             "(" + node.getText().Trim() + ")");
                     replacement = replacement.replace(
                         uid,
-                        "UNTRANSLATED_ " + LookupNodeType(node));
+                        "throw new NotImplementedException(\"UNTRANSLATED: " +
+                        LookupNodeType(node) +
+                        ":" + node.getText().Trim() + "\");");
                 }
 
                 //translations[i] = translated;
