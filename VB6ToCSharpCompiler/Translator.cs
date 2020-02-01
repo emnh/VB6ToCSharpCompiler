@@ -33,8 +33,9 @@ namespace VB6ToCSharpCompiler
     public class Translator
     {
 
-        const string FunctionReturnValueName = "functionReturnValue";
-        const string NewLine = "\r\n";
+        public const string FunctionReturnValueName = "functionReturnValue";
+        // TODO: Move
+        public const string NewLine = "\r\n";
 
         private Dictionary<ParseTree, List<ParseTree>> children;
 
@@ -253,7 +254,10 @@ namespace VB6ToCSharpCompiler
                 throw new ArgumentNullException(nameof(tree));
             }
 
-            return tree.GetType().Name.Contains("BlockStmtContext");
+            return
+                tree is VisualBasic6Parser.BlockStmtContext ||
+                tree is VisualBasic6Parser.BlockContext ||
+                tree is VisualBasic6Parser.BlockIfThenElseContext;
         }
 
         public SyntaxNode TranslateNode(ParseTree tree)
@@ -261,7 +265,7 @@ namespace VB6ToCSharpCompiler
             if (Translator.IsStatementBlock(tree))
             {
                 var statementList = new List<StatementSyntax>();
-                GetBlockStatements((VisualBasic6Parser.BlockContext) tree, statementList);
+                AddBlockStatements((VisualBasic6Parser.BlockContext) tree, statementList);
                 return SyntaxFactory.Block(SyntaxFactory.List(
                     statementList
                 ));
@@ -416,6 +420,17 @@ namespace VB6ToCSharpCompiler
                 var variableDeclarations = GetVariableDeclaration(context);
                 returnValue.AddRange(variableDeclarations);
             }
+            else if (tree is VisualBasic6Parser.LetStmtContext stmt &&
+                     ((LetImpl) program.getASGElementRegistry().getASGElement(stmt)).isSettingReturnVariable())
+            {
+                var left = SyntaxFactory.IdentifierName(FunctionReturnValueName);
+                var right = GetRightHandSide(((LetImpl)program.getASGElementRegistry().getASGElement(stmt)), returnValue);
+                returnValue.Add(GetAssignment(left, right));
+            }
+            else if (tree is VisualBasic6Parser.BlockContext block)
+            {
+                AddBlockStatements(block, returnValue);
+            }
             else if (TranslatorForPattern.CanTranslate(this, tree))
             {
                 var translation = TranslatorForPattern.Translate(this, tree);
@@ -438,8 +453,7 @@ namespace VB6ToCSharpCompiler
             return returnValue;
         }
 
-        // TODO: fix inconsistent void instead of return list
-        public void GetBlockStatements(VisualBasic6Parser.BlockContext block, List<StatementSyntax> statementList)
+        public void AddBlockStatements(VisualBasic6Parser.BlockContext block, List<StatementSyntax> statementList)
         //public void GetBlockStatement(TypeSyntax returnType, VisualBasic6Parser.BlockContext block, List<StatementSyntax> statementList)
         {
             if (block != null)
@@ -470,7 +484,7 @@ namespace VB6ToCSharpCompiler
                 SyntaxFactory.EmptyStatement().WithLeadingTrivia(comment)
             };
 
-            GetBlockStatements(block, statementList);
+            AddBlockStatements(block, statementList);
 
             var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(FunctionReturnValueName));
             statementList.Add(returnStatement);

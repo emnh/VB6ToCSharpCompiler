@@ -8,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using com.sun.org.apache.bcel.@internal.generic;
+using com.sun.org.apache.xml.@internal.dtm.@ref;
 using io.proleap.vb6.asg.metamodel;
 using javax.swing.filechooser;
 using jdk.nashorn.@internal.codegen;
@@ -21,6 +23,7 @@ namespace VB6ToCSharpCompiler
         private Translator translator;
 
         //private List<ParseTree> nodes = new List<ParseTree>();
+        private Dictionary<ParseTree, TreeNode> nodeMap;
 
         public frmVB6ASTBrowser(string fileName)
         {
@@ -32,7 +35,7 @@ namespace VB6ToCSharpCompiler
         {
             var compileResult = VB6Compiler.Compile(FileName);
 
-            var nodeMap = new Dictionary<ParseTree, TreeNode>();
+            nodeMap = new Dictionary<ParseTree, TreeNode>();
             
             translator = new Translator(compileResult);
 
@@ -65,7 +68,7 @@ namespace VB6ToCSharpCompiler
 
             VB6Compiler.Visit(compileResult, visitorCallback);
 
-            treVB6AST.ExpandAll();
+            //treVB6AST.ExpandAll();
         }
 
         private void treVB6AST_AfterSelect(object sender, TreeViewEventArgs e)
@@ -77,6 +80,21 @@ namespace VB6ToCSharpCompiler
         private void txtDebug_TextChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            foreach (TreeNode node in nodeMap.Values)
+            {
+                //txtDebug.Text += node.Text;
+                if (node.Text.Contains(txtSearch.Text))
+                {
+                    treVB6AST.SelectedNode = node;
+                    node.EnsureVisible();
+                    break;
+                }
+            }
+            //txtDebug.Text = txtSearch.Text;
         }
     }
 }

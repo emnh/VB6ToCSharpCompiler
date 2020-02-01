@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ using io.proleap.vb6.asg.metamodel.valuestmt.impl;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using org.antlr.v4.runtime;
 using org.antlr.v4.runtime.tree;
 
 namespace VB6ToCSharpCompiler
@@ -45,10 +47,15 @@ namespace VB6ToCSharpCompiler
             return returnValue;
         }
 
-        public ExpressionSyntax GetFirstGoodChild(ParseTree tree, List<StatementSyntax> statements)
+        public ExpressionSyntax GetFirstGoodChild(string forwardType, ParseTree tree, List<StatementSyntax> statements)
         {
+            Console.Error.WriteLine("GetFirstGoodChild: " + forwardType);
             var list = GetGoodChildren(tree, statements);
-            if (list.Count > 0)
+            if (list.Count > 1)
+            {
+                throw new InvalidOperationException("More than one good child.");
+            }
+            else if (list.Count > 0)
             {
                 return list[0];
             }
@@ -63,6 +70,36 @@ namespace VB6ToCSharpCompiler
 
             var argList = new List<ArgumentSyntax>();
 
+            GetArguments(statements, tree, argList);
+
+            var callSyntax =
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.IdentifierName(callName),
+                    SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(argList)));
+
+            return callSyntax;
+        }
+
+        public ExpressionSyntax GetExpression(FunctionCallImpl asg, List<StatementSyntax> statements)
+        {
+            var tree = asg.getCtx();
+
+            var callName = asg.getFunction().getName();
+
+            var argList = new List<ArgumentSyntax>();
+
+            GetArguments(statements, tree, argList);
+
+            var callSyntax =
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.IdentifierName(callName),
+                    SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(argList)));
+
+            return callSyntax;
+        }
+
+        private void GetArguments(List<StatementSyntax> statements, ParserRuleContext tree, List<ArgumentSyntax> argList)
+        {
             for (int i = 0; i < tree.getChildCount(); i++)
             {
                 var child = tree.getChild(i);
@@ -83,14 +120,9 @@ namespace VB6ToCSharpCompiler
                     }
                 }
             }
-
-            var callSyntax =
-                SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.IdentifierName(callName),
-                    SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(argList)));
-
-            return callSyntax;
         }
+
+        
 
         public ExpressionSyntax GetExpression(CallValueStmtImpl asg, List<StatementSyntax> statements)
         {
@@ -98,8 +130,7 @@ namespace VB6ToCSharpCompiler
             {
                 throw new ArgumentNullException(nameof(asg));
             }
-
-            return GetFirstGoodChild(asg.getCtx(), statements);
+            return GetFirstGoodChild(nameof(CallValueStmtImpl), asg.getCtx(), statements);
         }
 
         public ExpressionSyntax GetExpression(LiteralValueStmtImpl asg, List<StatementSyntax> statements)
@@ -109,7 +140,7 @@ namespace VB6ToCSharpCompiler
                 throw new ArgumentNullException(nameof(asg));
             }
 
-            return GetFirstGoodChild(asg.getCtx(), statements);
+            return GetFirstGoodChild(nameof(LiteralValueStmtImpl), asg.getCtx(), statements);
         }
 
         public ExpressionSyntax GetExpression(LiteralImpl asg, List<StatementSyntax> statements)
@@ -135,7 +166,17 @@ namespace VB6ToCSharpCompiler
             }
             else if (asg.getCtx().FILENUMBER() != null)
             {
-                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(Int32.Parse(asg.getValue())));
+
+                var num = asg.getValue().Trim('#');
+                if (num.All(c => char.IsDigit(c)))
+                {
+                    return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(int.Parse(num)));
+                }
+                else
+                {
+                    return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(asg.getValue()));
+                }
+                
             }
             else if (asg.getCtx().COLORLITERAL() != null)
             {
@@ -158,9 +199,10 @@ namespace VB6ToCSharpCompiler
                 throw new ArgumentNullException(nameof(asg));
             }
 
-            return GetFirstGoodChild(asg.getCtx(), statements);
+            return GetFirstGoodChild(nameof(CallDelegateImpl),asg.getCtx(), statements);
         }
 
+        /*
         public ExpressionSyntax GetExpression(LetImpl asg, List<StatementSyntax> statements)
         {
             if (asg == null)
@@ -168,8 +210,9 @@ namespace VB6ToCSharpCompiler
                 throw new ArgumentNullException(nameof(asg));
             }
 
-            return GetFirstGoodChild(asg.getCtx(), statements);
+            return GetFirstGoodChild(nameof(LetImpl), asg.getCtx(), statements);
         }
+        */
 
         public ExpressionSyntax GetExpression(ArgCallImpl asg, List<StatementSyntax> statements)
         {
@@ -272,7 +315,7 @@ namespace VB6ToCSharpCompiler
                 throw new ArgumentNullException(nameof(asg));
             }
 
-            return GetFirstGoodChild(asg.getCtx(), statements);
+            return GetFirstGoodChild(nameof(ArgValueAssignmentImpl), asg.getCtx(), statements);
         }
 
         public ExpressionSyntax GetExpression(IfConditionImpl asg, List<StatementSyntax> statements)
@@ -282,9 +325,30 @@ namespace VB6ToCSharpCompiler
                 throw new ArgumentNullException(nameof(asg));
             }
 
-            return GetFirstGoodChild(asg.getCtx(), statements);
+            return GetFirstGoodChild(nameof(IfConditionImpl), asg.getCtx(), statements);
         }
 
+        public ExpressionSyntax GetExpression(TypeElementCallImpl asg, List<StatementSyntax> statements)
+        {
+            if (asg == null)
+            {
+                throw new ArgumentNullException(nameof(asg));
+            }
+
+            return GetFirstGoodChild(nameof(IfConditionImpl), asg.getCtx(), statements);
+        }
+
+        public ExpressionSyntax GetExpression(ConstantCallImpl asg, List<StatementSyntax> statements)
+        {
+            if (asg == null)
+            {
+                throw new ArgumentNullException(nameof(asg));
+            }
+
+            return GetFirstGoodChild(nameof(ConstantCallImpl), asg.getCtx(), statements);
+        }
+
+        /*
         public ExpressionSyntax GetExpression(MembersCallImpl asg, List<StatementSyntax> statements)
         {
             if (asg == null)
@@ -293,11 +357,11 @@ namespace VB6ToCSharpCompiler
             }
 
             //var left = GetExpression(asg.getCtx().getChild(0), statements);
-            var left = GetFirstGoodChild(asg.getCtx(), statements);
+            var left = GetFirstGoodChild(nameof(MembersCallImpl), asg.getCtx(), statements);
             var right = asg.getName(); // GetExpression(asg.getCtx().getChild(1)), statements);
             return SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, left, SyntaxFactory.Token(SyntaxKind.DotToken), SyntaxFactory.IdentifierName(right));
             //return GetFirstGoodChild(asg.getCtx(), statements);
-        }
+        }*/
 
         public ExpressionSyntax GetExpression(VariableCallImpl asg, List<StatementSyntax> statements)
         {
@@ -331,21 +395,6 @@ namespace VB6ToCSharpCompiler
 
             var asg = this.translator.program.getASGElementRegistry().getASGElement(tree);
 
-            /*if (asg is CallValueStmtImpl call)
-            {
-                if (tree.getChildCount() > 1)
-                {
-                    throw new InvalidOperationException("CallValueStmtImpl has more than one child");
-                }
-                for (int i = 0; i < tree.getChildCount(); i++)
-                {
-                    var child = tree.getChild(i);
-                    // TODO: what to do if there is more than one child?
-                    return GetExpression(child, statements);
-                }
-            }
-            else
-            {*/
             // TODO: optimize if too slow
             var methods = this.GetType().GetMethods();
             foreach (var method in methods)
@@ -363,42 +412,36 @@ namespace VB6ToCSharpCompiler
                 }
             }
 
-            if (asg == null)
-            {
-                return GetFirstGoodChild(tree, statements);
-            }
-
-            // For debugging
-            //translator.AddDebugInfo(tree, statements);
-            //for (int i = 0; i < tree.getChildCount(); i++)
-            //{
-            //    var child = tree.getChild(i);
-            //    GetExpression(child, statements);
-            //}
-
-            //}
-            /*
-            AddDebugInfo(tree.getCtx(), statements);
-
-            //var asg = (LetImpl) program.getASGElementRegistry().getASGElement(tree);
-
-            foreach (var sub in tree.getSubValueStmts().JavaListToCSharpList<ValueStmt>())
-            {
-
-                //AddDebugInfo();
-            }
-            */
-
-            //var comment = "// Unhandled GetExpression: " + tree.GetType().Name + ":" + tree.getText();
-            //statements.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(
-            //    SyntaxFactory.Comment(comment)));
-
-            //return SyntaxFactory.IdentifierName("Unhandled: " + tree.GetType().Name + ":" + tree.getText());
-
             if (TranslatorForPattern.CanTranslate(translator, tree))
             {
                 return TranslatorForPattern.TranslateExpression(this.translator, tree);
             }
+
+            if (tree is TerminalNodeImpl)
+            {
+                return null;
+            } else if (tree is VisualBasic6Parser.AmbiguousIdentifierContext)
+            {
+                var name = tree.getText().Trim();
+                if (!name.All(c => char.IsLetterOrDigit(c) || "_$".Contains(c)))
+                {
+                    throw new InvalidOperationException("Identifier was not alphanumeric: " + name);
+                }
+                return SyntaxFactory.IdentifierName(name);
+            } else if (tree is VisualBasic6Parser.ArgsCallContext)
+            {
+                return GetFirstGoodChild(nameof(ConstantCallImpl), tree, statements);
+            }
+
+            var explanation = "// " + tree.GetType().Name + " not in [" + TranslatorForPattern.DocPatterns() + "]" + Translator.NewLine;
+            Console.Error.WriteLine(nameof(GetExpression) + ": " + tree.GetType().Name + ": " + tree.getText());
+            Console.Error.WriteLine(explanation);
+            if (asg != null)
+            {
+                Console.Error.WriteLine(nameof(GetExpression) + ": " + asg.GetType().Name);
+            }
+            // TODO: Reenable.
+            throw new InvalidOperationException("Expression returned null");
 
             return null;
         }

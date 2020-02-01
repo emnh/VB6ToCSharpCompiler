@@ -182,6 +182,7 @@
     <Compile Include="IndexedPath.cs" />
     <Compile Include="JavaUtil.cs" />
     <Compile Include="Pattern.cs" />
+    <Compile Include="PatternText.cs" />
     <Compile Include="TranslatorForExpression.cs" />
     <Compile Include="TranslatorForPattern.cs" />
     <Compile Include="VB6Compiler.cs" />

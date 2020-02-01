@@ -30,6 +30,7 @@
         {
             this.treVB6AST = new System.Windows.Forms.TreeView();
             this.txtDebug = new System.Windows.Forms.TextBox();
+            this.txtSearch = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // treVB6AST
@@ -49,11 +50,20 @@
             this.txtDebug.TabIndex = 1;
             this.txtDebug.TextChanged += new System.EventHandler(this.txtDebug_TextChanged);
             // 
+            // txtSearch
+            // 
+            this.txtSearch.Location = new System.Drawing.Point(13, 932);
+            this.txtSearch.Name = "txtSearch";
+            this.txtSearch.Size = new System.Drawing.Size(695, 20);
+            this.txtSearch.TabIndex = 2;
+            this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
+            // 
             // frmVB6ASTBrowser
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(2027, 1098);
+            this.Controls.Add(this.txtSearch);
             this.Controls.Add(this.txtDebug);
             this.Controls.Add(this.treVB6AST);
             this.Name = "frmVB6ASTBrowser";
@@ -68,5 +78,6 @@
 
         private System.Windows.Forms.TreeView treVB6AST;
         private System.Windows.Forms.TextBox txtDebug;
+        private System.Windows.Forms.TextBox txtSearch;
     }
 }

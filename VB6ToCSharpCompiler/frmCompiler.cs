@@ -37,6 +37,7 @@ namespace VB6ToCSharpCompiler
             {
                 lstFileNames.Items.Add(fileName);
             }
+            TranslatorForPattern.IntializeTranslatorForPattern();
         }
 
         private void btnBrowseVB6AST_Click(object sender, EventArgs e)

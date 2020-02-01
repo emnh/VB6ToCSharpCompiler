@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms.VisualStyles;
+using com.sun.xml.@internal.ws.message;
+using io.proleap.vb6.asg.exception;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using org.antlr.v4.runtime.tree;
@@ -18,63 +21,113 @@ namespace VB6ToCSharpCompiler
         private static Dictionary<string, List<Pattern>> compiledPatterns;
         //private static List<Pattern> compiledPatternsList;
 
-        static TranslatorForPattern()
+        // Statement pattern
+        static PatternText S(string VbCode, string CsharpCode)
         {
-            var patterns = new List<Tuple<string, string>>()
+            return new PatternText(PatternText.vbStatementWrapper, VbCode, CsharpCode);
+        }
+
+        static PatternText S2(string VbCode, string CsharpCode)
+        {
+            return new PatternText(PatternText.vbDeclaredStatementWrapper, VbCode, CsharpCode);
+        }
+
+        // Expression pattern
+        static PatternText E(string VbCode, string CsharpCode)
+        {
+            return new PatternText(PatternText.vbExpressionWrapper, VbCode, CsharpCode);
+        }
+
+        // Conditional pattern
+        static PatternText C(string VbCode, string CsharpCode)
+        {
+            return new PatternText(PatternText.vbConditionalWrapper, VbCode, CsharpCode);
+        }
+
+        public static void IntializeTranslatorForPattern()
+        {
+            var patterns = new List<PatternText>()
             {
                 // Note: Pattern letters which are used on left hand side but do not appear on right hand side simply disappear
-                // Note: Z = is a special pattern to denote an expression.
-                Tuple.Create("Z = A + B", "A + B"),
-                Tuple.Create("Z = A - B", "A - B"),
-                Tuple.Create("Z = A / B", "A / B"),
-                Tuple.Create("Z = A * B", "A * B"),
-                /* Not supported in VB6
-                {"A += B", "A += B"},
-                {"A -= B", "A -= B"},
-                {"A /= B", "A /= B"},
-                {"A *= B", "A *= B"},
-                */
-                Tuple.Create("Z = A & B", "A + B"),
-                Tuple.Create("Z = (A)", "(A)"),
-                Tuple.Create("A = B", "A = B;"),
-                Tuple.Create(@"
-If A Then
-    B
-Else
-    C
-End If
-",
-                    @"
-if (A) {
-    B;
-} else {
-    C;
-}
-"
-),
-                Tuple.Create(@"
-If A Then
-    B
-End If
-",
-                    @"
-if (A) {
-    B;
-}
-"
-                )
+                E("A & B", "A + B"),
+                E("A * B", "A * B"),
+                E("A + B", "A + B"),
+                E("A - B", "A - B"),
+                E("A / B", "A / B"),
+                E("A \\ B", "((int) (Math.Round(A)) / ((int) Math.Round(B)"),
+                E("A ^ B", "Math.Pow(A, B)"),
+                E("AddressOf A","VB6Compat.AddressOf(A);"),
+                // Eqv -> Not Xor?
+                E("A Eqv B","VB6Compat.Eqv(A, B)"),
+                // Imp -> Google which logical operators to use
+                E("A Imp B","VB6Compat.VB6Imp(A, B)"),
+                E("A Is B", "A == B;"),
+                E("(A)", "(A)"),
+                E("A.B", "A.B"),
+                E("A(B)", "A[B]"),
+                S("A.B = C", "A.B = C;"),
+                // A is declared as array in statement wrapper
+                S2("A(B) = C", "A[B] = C;"),
+                S("A = B", "A = B;"),
+                S("A:", "A:"),
+                S("Open A For Input Shared As B", "VB6Compat.OpenFile(A, B);"),
+                S("Close A", "VB6Compat.CloseFile(A);"),
+                S("Erase A", "VB6Compat.EraseArray(A);"),
+                S("Exit Function", "return " + Translator.FunctionReturnValueName + ";"),
+                S("If A Then\n B\n Else\n C\n End If\n", "if (A) { B; } else { C; }"),
+                S("If A Then\n B\n End If\n", "if (A) { B; }"),
+                //S("Select Case A\n Case B\n C\n Case D\n E\n End Select",
+                //  "switch (A) { case B: C; break; case D: E; break; };"),
+                C("A = B", @"A == B"),
+                C("A < B", @"A < B"),
+                C("A <= B", @"A <= B"),
+                C("A > B", @"A > B"),
+                C("A >= B", @"A >= B"),
+                C("A <> B", @"A != B"),
+                C("A Or B", "A || B"),
+                C("A And B", "A && B"),
+                C("Not A", "!A"),
+                /*
+                new PatternText(
+                    PatternText.vbReturnStatementWrapper,
+                    "B = A",
+                    Translator.FunctionReturnValueName + " = A")
+                    */
             };
 
             compiledPatterns = new Dictionary<string, List<Pattern>>();
-            foreach (var item in patterns)
+            foreach (var patternText in patterns)
             {
-                var pattern = new Pattern(item.Item1, item.Item2);
-                if (!compiledPatterns.ContainsKey(pattern.vbASGType))
+                Pattern pattern = null;
+                try
                 {
-                    compiledPatterns[pattern.vbASGType] = new List<Pattern>();
+                    pattern = patternText.Compile();
+                } catch (VbParserException e)
+                {
+                    Console.Error.WriteLine("Pattern Compile Failed: " + patternText.LogValue());
+                    throw;
                 }
-                compiledPatterns[pattern.vbASGType].Add(pattern);
+
+                Console.Error.WriteLine(
+                    "Pattern: " + patternText.LogValue() + ", " +
+                    nameof(pattern.vbTreeNodeType) + ": " + pattern.vbTreeNodeType);
+
+                if (!compiledPatterns.ContainsKey(pattern.vbTreeNodeType))
+                {
+                    compiledPatterns[pattern.vbTreeNodeType] = new List<Pattern>();
+                }
+                compiledPatterns[pattern.vbTreeNodeType].Add(pattern);
             }
+
+            foreach (var pat in compiledPatterns)
+            {
+                foreach (var pat2 in pat.Value)
+                {
+                    Console.Error.WriteLine("PATTERNSTATUS: " + pat2.vbString + ": " + pat2.vbTreeNodeType + ": " + pat2.GetLogPath());
+                }
+            }
+
+            ;
         }
 
         public static bool CanTranslate(Translator translator, ParseTree tree)
@@ -84,20 +137,25 @@ if (A) {
                 throw new ArgumentNullException(nameof(tree));
             }
             var name = tree.GetType().Name;
-            var allGood = compiledPatterns.ContainsKey(name);
-            if (allGood)
+            var canTranslate = compiledPatterns.ContainsKey(name);
+            if (canTranslate)
             {
-                allGood = false;
+                canTranslate = false;
                 foreach (var pattern in compiledPatterns[name])
                 {
                     if (pattern.CanTranslate(translator, tree))
                     {
-                        allGood = true;
+                        canTranslate = true;
                         break;
                     };
                 }
+
+                if (!canTranslate)
+                {
+                    throw new InvalidOperationException("Valid patterns for case, but none of them worked.");
+                }
             }
-            return allGood;
+            return canTranslate;
         }
 
         public static SyntaxNode Translate(Translator translator, ParseTree tree)
@@ -124,7 +182,20 @@ if (A) {
 
         public static ExpressionSyntax TranslateExpression(Translator translator, ParseTree tree)
         {
-            return (ExpressionSyntax) Translate(translator, tree);
+            var result = Translate(translator, tree);
+            Console.Error.WriteLine("Result: " + result);
+            if (result is ExpressionSyntax es)
+            {
+                return es;
+            }
+            else if (result is ExpressionStatementSyntax ess)
+            {
+                return ess.Expression;
+            }
+            else
+            {
+                throw new InvalidOperationException("This shouldn't happen.");
+            }
         }
 
         public static string DocPatterns()
