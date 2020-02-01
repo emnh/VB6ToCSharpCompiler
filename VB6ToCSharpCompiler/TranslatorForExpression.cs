@@ -23,9 +23,6 @@ namespace VB6ToCSharpCompiler
     public class TranslatorForExpression
     {
         private Translator translator;
-        private int depth = 0;
-
-        //private Dictionary<ASGElement, ExpressionSyntax> mapping = new Dictionary<ASGElement, ExpressionSyntax>();
 
         public TranslatorForExpression(Translator translator)
         {
@@ -64,6 +61,8 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(ApiProcedureCallImpl asg, List<StatementSyntax> statements)
         {
+            throw new InvalidOperationException("Prefer patterns over this method.");
+
             var tree = asg.getCtx();
 
             var callName = asg.getApiProcedure().getName();
@@ -82,6 +81,8 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(FunctionCallImpl asg, List<StatementSyntax> statements)
         {
+            throw new InvalidOperationException("Prefer patterns over this method.");
+
             var tree = asg.getCtx();
 
             var callName = asg.getFunction().getName();
@@ -126,6 +127,7 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(CallValueStmtImpl asg, List<StatementSyntax> statements)
         {
+            throw new InvalidOperationException("Prefer patterns over this method.");
             if (asg == null)
             {
                 throw new ArgumentNullException(nameof(asg));
@@ -135,6 +137,7 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(LiteralValueStmtImpl asg, List<StatementSyntax> statements)
         {
+            throw new InvalidOperationException("Prefer patterns over this method.");
             if (asg == null)
             {
                 throw new ArgumentNullException(nameof(asg));
@@ -194,6 +197,7 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(CallDelegateImpl asg, List<StatementSyntax> statements)
         {
+            throw new InvalidOperationException("Prefer patterns over this method.");
             if (asg == null)
             {
                 throw new ArgumentNullException(nameof(asg));
@@ -216,7 +220,7 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(ArgCallImpl asg, List<StatementSyntax> statements)
         {
-            
+            throw new InvalidOperationException("Prefer patterns over this method.");
             if (asg == null)
             {
                 throw new ArgumentNullException(nameof(asg));
@@ -227,6 +231,7 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(StringValueStmtImpl asg, List<StatementSyntax> statements)
         {
+            throw new InvalidOperationException("Prefer patterns over this method.");
             var ctx = asg.getCtx();
             var children = GetGoodChildren(asg.getCtx(), statements);
             if (children.Count < 2)
@@ -235,40 +240,6 @@ namespace VB6ToCSharpCompiler
             }
             return SyntaxFactory.BinaryExpression(SyntaxKind.AddExpression, children[0], children[1]);
         }
-
-        /*
-        public ExpressionSyntax GetExpression(ArithmeticValueStmtImpl asg, List<StatementSyntax> statements)
-        {
-            var ctx = asg.getCtx();
-            var children = GetGoodChildren(asg.getCtx(), statements);
-            if (children.Count < 2)
-            {
-                throw new NotImplementedException("Arithmetic < 2: " + ctx.GetType().Name + ": " + ctx.getText());
-            }
-            if (ctx is VisualBasic6Parser.VsMinusContext)
-            {
-                return SyntaxFactory.BinaryExpression(SyntaxKind.SubtractExpression, children[0], children[1]);
-            //} else if (ctx is VisualBasic6Parser.VsPlusContext)
-            //{
-            //    return SyntaxFactory.BinaryExpression(SyntaxKind.PlusToken, children[0], children[1]);
-            } else if (ctx is VisualBasic6Parser.VsAddContext)
-            {
-                return SyntaxFactory.BinaryExpression(SyntaxKind.AddExpression, children[0], children[1]);
-            }
-            else if (ctx is VisualBasic6Parser.VsMultContext)
-            {
-                return SyntaxFactory.BinaryExpression(SyntaxKind.MultiplyExpression, children[0], children[1]);
-            }
-            else if (ctx is VisualBasic6Parser.VsDivContext)
-            {
-                return SyntaxFactory.BinaryExpression(SyntaxKind.DivideExpression, children[0], children[1]);
-            }
-            else
-            {
-                throw new NotImplementedException("Arithmetic: " + ctx.GetType().Name + ": " + ctx.getText());
-            }
-        }
-        */
 
         // TODO: make sure all calls are resolving
         public ExpressionSyntax GetExpression(UndefinedCallImpl asg, List<StatementSyntax> statements)
@@ -279,6 +250,9 @@ namespace VB6ToCSharpCompiler
 
             var argList = new List<ArgumentSyntax>();
 
+            GetArguments(statements, tree, argList);
+
+            /*
             for (int i = 0; i < tree.getChildCount(); i++)
             {
                 var child = tree.getChild(i);
@@ -299,6 +273,7 @@ namespace VB6ToCSharpCompiler
                     }
                 }
             }
+            */
 
             var callSyntax =
                 SyntaxFactory.InvocationExpression(
@@ -310,6 +285,7 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(ArgValueAssignmentImpl asg, List<StatementSyntax> statements)
         {
+            throw new InvalidOperationException("Prefer patterns over this method.");
             if (asg == null)
             {
                 throw new ArgumentNullException(nameof(asg));
@@ -320,6 +296,7 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(IfConditionImpl asg, List<StatementSyntax> statements)
         {
+            throw new InvalidOperationException("Prefer patterns over this method.");
             if (asg == null)
             {
                 throw new ArgumentNullException(nameof(asg));
@@ -330,6 +307,8 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(TypeElementCallImpl asg, List<StatementSyntax> statements)
         {
+            throw new InvalidOperationException("Prefer patterns over this method.");
+
             if (asg == null)
             {
                 throw new ArgumentNullException(nameof(asg));
@@ -340,6 +319,7 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(ConstantCallImpl asg, List<StatementSyntax> statements)
         {
+            throw new InvalidOperationException("Prefer patterns over this method.");
             if (asg == null)
             {
                 throw new ArgumentNullException(nameof(asg));
@@ -365,6 +345,8 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetExpression(VariableCallImpl asg, List<StatementSyntax> statements)
         {
+            throw new InvalidOperationException("Prefer patterns over this method.");
+
             if (asg == null)
             {
                 throw new ArgumentNullException(nameof(asg));
@@ -395,6 +377,18 @@ namespace VB6ToCSharpCompiler
 
             var asg = this.translator.program.getASGElementRegistry().getASGElement(tree);
 
+            if (TranslatorForPattern.CanTranslate(translator, tree))
+            {
+                return TranslatorForPattern.TranslateExpression(this.translator, tree);
+            }
+
+            var goodChildren = GetGoodChildren(tree, statements);
+            if (goodChildren.Count == 1)
+            {
+                Console.Error.WriteLine("FORWARDED: " + tree.GetType().Name + ": " + tree.getText());
+                return goodChildren[0];
+            }
+
             // TODO: optimize if too slow
             var methods = this.GetType().GetMethods();
             foreach (var method in methods)
@@ -412,15 +406,20 @@ namespace VB6ToCSharpCompiler
                 }
             }
 
-            if (TranslatorForPattern.CanTranslate(translator, tree))
+            /*else if (tree is VisualBasic6Parser.TypeHintContext)
             {
-                return TranslatorForPattern.TranslateExpression(this.translator, tree);
-            }
+                return SyntaxFactory.CastExpression(
+                    SyntaxFactory.Token(SyntaxKind.OpenParenToken),
+                    SyntaxFactory.ParseTypeName("string"),
+                    SyntaxFactory.Token(SyntaxKind.CloseParenToken),
+                );*/
 
             if (tree is TerminalNodeImpl)
             {
                 return null;
-            } else if (tree is VisualBasic6Parser.AmbiguousIdentifierContext)
+            } else if (tree is VisualBasic6Parser.CertainIdentifierContext || 
+                       tree is VisualBasic6Parser.AmbiguousIdentifierContext ||
+                       tree is VisualBasic6Parser.AmbiguousKeywordContext)
             {
                 var name = tree.getText().Trim();
                 if (!name.All(c => char.IsLetterOrDigit(c) || "_$".Contains(c)))

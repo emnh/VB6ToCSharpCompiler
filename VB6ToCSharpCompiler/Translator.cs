@@ -50,6 +50,13 @@ namespace VB6ToCSharpCompiler
             {
                 Callback = (node, parent) =>
                 {
+                    // Just make sure all nodes, even leaves, have empty children lists
+                    if (!children.ContainsKey(node))
+                    {
+                        children[node] = new List<ParseTree>();
+                    }
+
+                    // Add this to children of parent
                     if (!children.ContainsKey(node.getParent()))
                     {
                         children[node.getParent()] = new List<ParseTree>();

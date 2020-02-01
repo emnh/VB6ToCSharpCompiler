@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using com.ibm.icu.text;
 using com.sun.org.apache.xpath.@internal.compiler;
+using com.sun.tools.corba.se.idl;
 using ikvm.extensions;
 using io.proleap.vb6;
 using io.proleap.vb6.asg.metamodel;
@@ -256,7 +257,7 @@ namespace VB6ToCSharpCompiler
                     var sym = tni.symbol.getText().Trim();
                     // TODO: Check if inside CONTENT rather than ignore public.
                     if (!string.IsNullOrEmpty(sym) && sym != "public" &&
-                        sym.All(c => char.IsLetter(c) || char.IsWhiteSpace(c)))
+                        sym.All(c => char.IsLetter(c) || char.IsWhiteSpace(c) || c == '$'))
                     {
                         tokens.Add(Tuple.Create(tni.getSourceInterval().a, sym));
                     }
@@ -273,6 +274,28 @@ namespace VB6ToCSharpCompiler
             foreach (var item in path) list.Add(item.NodeTypeName + ":" + item.ChildIndex);
 
             return string.Join("/", list);
+        }
+
+        public static string LookupNodeType(string a)
+        {
+            //string a2 = a == "ICS_S_VariableOrProcedureCallContext" ? "FunctionStmtContext" : a;
+            //string a2 = a == "ICS_B_ProcedureCallContext" ? "SubStmtContext" : a;
+            //string a2 = a == "ICS_B_ProcedureCallContext" ? "ICS_S_ProcedureOrArrayCallContext" : a;
+            string returnValue = a;
+            //returnValue = returnValue == "ImplicitCallStmt_InBlockContext" ? "SubStmtContext" : returnValue;
+            returnValue = returnValue == "ICS_B_ProcedureCallContext" ? "SubStmtContext" : returnValue;
+            //returnValue = returnValue == "ICS_B_ProcedureCallContext" ? "ICS_S_ProcedureOrArrayCallContext" : returnValue;
+            if (a == "ICS_B_ProcedureCallContext")
+            {
+                Debugger.Break();
+            }
+            returnValue = returnValue == "CertainIdentifierContext" ? "AmbiguousIdentifierContext" : returnValue;
+            return returnValue;
+        }
+
+        public static bool CompareNodeTypes(string a, string b)
+        {
+            return LookupNodeType(a) == LookupNodeType(b);
         }
 
         private static ParseTree LookupNodeFromPath(Translator translator, ParseTree root, List<IndexedPath> path,
@@ -294,7 +317,7 @@ namespace VB6ToCSharpCompiler
                 var child = children[indexedPath.ChildIndex];
 
                 var last = indexedPath == path[path.Count - 1];
-                if (!last && child.GetType().Name != indexedPath.NodeTypeName)
+                if (!last && !CompareNodeTypes(child.GetType().Name, indexedPath.NodeTypeName))
                 {
                     if (justCheck) return null;
 
@@ -377,7 +400,7 @@ namespace VB6ToCSharpCompiler
                 }
                 else
                 {
-                    lowestCommonDepth = i + 1;
+                    lowestCommonDepth = Math.Min(comparePath.Count - 1, i + 1);
                 }
             }
 
@@ -388,11 +411,23 @@ namespace VB6ToCSharpCompiler
             VbTreeNodeType = comparePath[lowestCommonDepth].NodeTypeName;
             
             // Skip uninteresting wrapper nodes
-            while (VbTreeNodeType == "VsICSContext" || VbTreeNodeType == "ImplicitCallStmt_InStmtContext")
+            while (VbTreeNodeType == "VsICSContext" ||
+                   VbTreeNodeType == "ImplicitCallStmt_InStmtContext")
             {
                 lowestCommonDepth++;
                 VbTreeNodeType = comparePath[lowestCommonDepth].NodeTypeName;
             }
+            
+            // VbTreeNodeType == "ICS_B_ProcedureCallContext")
+            while (VbTreeNodeType == "ArgsCallContext" ||
+                   VbTreeNodeType == "AmbiguousIdentifierContext")
+            {
+                lowestCommonDepth--;
+                VbTreeNodeType = comparePath[lowestCommonDepth].NodeTypeName;
+            }
+
+            VbTreeNodeType = LookupNodeType(VbTreeNodeType);
+
             cutDepth = lowestCommonDepth + 1;
             finalCutDepthOfContent = cutDepth;
 
@@ -432,7 +467,7 @@ namespace VB6ToCSharpCompiler
                     if (i == -1) throw new InvalidOperationException("could not find child node in parent");
                 }
 
-                s.Add(new IndexedPath(iterationNode.GetType().Name, index));
+                s.Add(new IndexedPath(LookupNodeType(iterationNode.GetType().Name), index));
                 iterationNode = iterationNode.Parent;
             }
 

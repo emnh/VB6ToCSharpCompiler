@@ -21,6 +21,25 @@ public Sub Z()
 End Sub
 ";
 
+        public const string vbStatementFunctionWrapper = @"
+public Function A()
+End Function
+public Sub Z()
+    CONTENT
+End Sub
+";
+        
+        // Dim B,C,D,E,F,G,H as Integer
+        // public Sub A(b as Integer, c as Integer, d as Integer, e as Integer, f as Integer, g as Integer, h as Integer)
+        public const string vbStatementSubWrapper = @"
+public Sub A()
+End Sub
+public Sub Z()
+    CONTENT
+End Sub
+";
+
+
         public const string vbConditionalWrapper = @"
 public Sub Z()
     If CONTENT Then
