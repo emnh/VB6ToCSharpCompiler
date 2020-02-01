@@ -262,7 +262,7 @@ namespace VB6ToCSharpCompiler
             }
 
             return
-                tree is VisualBasic6Parser.BlockStmtContext ||
+                //tree is VisualBasic6Parser.BlockStmtContext ||
                 tree is VisualBasic6Parser.BlockContext ||
                 tree is VisualBasic6Parser.BlockIfThenElseContext;
         }
@@ -279,6 +279,13 @@ namespace VB6ToCSharpCompiler
                 //return 
                 //throw new InvalidOperationException("Statement inside expression. I thought this couldn't happen.");
                 //return GetStatement((VisualBasic6Parser.BlockStmtContext) tree);
+            }
+            else if (tree is VisualBasic6Parser.BlockStmtContext)
+            {
+                var statementList = GetStatement(tree);
+                return SyntaxFactory.Block(SyntaxFactory.List(
+                    statementList
+                ));
             }
             else
             {

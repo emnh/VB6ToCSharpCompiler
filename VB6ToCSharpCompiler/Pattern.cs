@@ -288,15 +288,6 @@ namespace VB6ToCSharpCompiler
             //string a2 = a == "ICS_B_ProcedureCallContext" ? "SubStmtContext" : a;
             //string a2 = a == "ICS_B_ProcedureCallContext" ? "ICS_S_ProcedureOrArrayCallContext" : a;
             string returnValue = node.GetType().Name;
-            if (node.getText().Contains("ioFil_Slett (FilnavnTil)"))
-            {
-                Console.Error.WriteLine(nameof(LookupNodeType) + ": " + returnValue + ": " + node.getText());
-                Debugger.Break();
-            }
-            if (returnValue == "ICS_B_ProcedureCallContext")
-            {
-
-            }
             //returnValue = returnValue == "ImplicitCallStmt_InBlockContext" ? "SubStmtContext" : returnValue;
             //returnValue = returnValue == "ICS_B_ProcedureCallContext" ? "SubStmtContext" : returnValue;
             returnValue = returnValue == "ICS_B_ProcedureCallContext" ? "ICS_S_ProcedureOrArrayCallContext" : returnValue;

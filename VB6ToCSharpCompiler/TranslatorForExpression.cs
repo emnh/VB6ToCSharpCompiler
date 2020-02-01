@@ -186,10 +186,51 @@ namespace VB6ToCSharpCompiler
                 throw new InvalidOperationException("color literal");
                 //return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(asg.getCtx().COLORLITERAL().getText()));
             }
+            else if (asg.getCtx().TRUE() != null)
+            {
+                //return SyntaxFactory.LiteralExpression(SyntaxKind.BoolKeyword, SyntaxFactory.Token(SyntaxKind.TrueKeyword));
+                return SyntaxFactory.ParseExpression("true");
+            }
+            else if (asg.getCtx().FALSE() != null)
+            {
+                return SyntaxFactory.ParseExpression("false");
+            }
             else
             {
+                throw new NotImplementedException("node type: " + asg.getCtx().GetType().Name + ": " + asg.getCtx().getText());
                 // TODO: A bit risky. Assumes that literals are same in VB6 and C#.
                 return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(asg.getValue()));
+            }
+
+            //return GetExpression(asg.getCtx().getChild(0), statements);
+        }
+
+        public ExpressionSyntax HandleBaseTypeContext(VisualBasic6Parser.BaseTypeContext node, List<StatementSyntax> statements)
+        {
+            if (node == null)
+            {
+                throw new ArgumentNullException(nameof(node));
+            }
+
+
+            if (node.STRING() != null)
+            {
+                //return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(asg.getCtx().STRINGLITERAL().getText());
+                return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(node.getText()));
+            }
+            else if (node.INTEGER() != null)
+            {
+                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(Int32.Parse(node.getText())));
+            }
+            else if (node.DOUBLE() != null)
+            {
+                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(Double.Parse(node.getText())));
+            }
+            else
+            {
+                throw new NotImplementedException("node type");
+                // TODO: A bit risky. Assumes that literals are same in VB6 and C#.
+                return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(node.getText()));
             }
 
             //return GetExpression(asg.getCtx().getChild(0), statements);
@@ -430,6 +471,9 @@ namespace VB6ToCSharpCompiler
             } else if (tree is VisualBasic6Parser.ArgsCallContext)
             {
                 return GetFirstGoodChild(nameof(ConstantCallImpl), tree, statements);
+            } else if (tree is VisualBasic6Parser.BaseTypeContext btc)
+            {
+                return HandleBaseTypeContext(btc, statements);
             }
 
             var explanation = "// " + Pattern.LookupNodeType(tree) + " not in [" + TranslatorForPattern.DocPatterns() + "]" + Translator.NewLine;
