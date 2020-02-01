@@ -169,7 +169,6 @@ namespace VB6ToCSharpCompiler
                 S("Const A As B = C", "const B A = C;"),
                 E(".B", "withVar.B"),
                 S(".B = C", "withVar.B = C;"),
-                // Arne: What's this End doing at the end of the case?
                 S("End", "Application.Exit();"),
                 // 5 clauses
                 S("Select Case A\n Case B\n C\n Case D\n E\n Case F\n G\n Case H\n I\n Case J\n K\n End Select",
