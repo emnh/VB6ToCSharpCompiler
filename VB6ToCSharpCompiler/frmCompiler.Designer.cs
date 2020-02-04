@@ -44,6 +44,7 @@
             this.lstFileNames.Name = "lstFileNames";
             this.lstFileNames.Size = new System.Drawing.Size(265, 589);
             this.lstFileNames.TabIndex = 9;
+            this.lstFileNames.SelectedIndexChanged += new System.EventHandler(this.lstFileNames_SelectedIndexChanged);
             // 
             // txtCSharpCode
             // 

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using com.sun.org.apache.xpath.@internal.functions;
+using io.proleap.vb6;
 using io.proleap.vb6.asg.metamodel.impl;
 using io.proleap.vb6.asg.@params.impl;
 using javax.swing.text;
@@ -64,6 +65,15 @@ namespace VB6ToCSharpCompiler
 
             var code = data ?? System.IO.File.ReadAllText(fileName);
 
+            // For now, treat forms as modules
+            /*
+            if (fileName.EndsWith(".frm"))
+            {
+                var splitted =
+                    code.Split(new string[] { "Attribute VB_Name" }, StringSplitOptions.None);
+                code = "Attribute VB_Name" + splitted[1];
+            }*/
+
             returnValue.VBCode = code;
             returnValue.FileName = fileName;
 
@@ -76,6 +86,7 @@ namespace VB6ToCSharpCompiler
                     new VbParserParamsImpl());
 
             returnValue.Program = program;
+
 
             var modules = program.getModules();
             

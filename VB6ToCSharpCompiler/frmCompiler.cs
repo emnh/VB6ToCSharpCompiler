@@ -54,5 +54,10 @@ namespace VB6ToCSharpCompiler
             //var tfp = new TranslatorForPattern();
 
         }
+
+        private void lstFileNames_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

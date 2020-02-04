@@ -105,34 +105,6 @@ namespace VB6ToCSharpCompiler
 
                     Console.Error.WriteLine("SetCutDepthAndCutPath: " + VbCode + ": " + PrintPath(path));
 
-                    /*
-                    if (cutDepthOfContent != -1 && path.Count == cutDepthOfContent && identifier == Content)
-                    {
-                        cutPath = path;
-                    }
-
-                    if (cutDepthOfContent == -1 && identifier == Content)
-                    {
-                        
-                        // TODO: do it more elegantly
-                        if (node.GetType().Name == "IfConditionStmtContext")
-                            cutDepthOfContent = path.Count;
-                        else if (node.GetType().Name == "BlockContext")
-                            cutDepthOfContent = path.Count + 1;
-                        else if (node.GetType().Name == "BlockStmtContext")
-                            cutDepthOfContent = path.Count - 1;
-                        else if (node.GetType().Name == "VsICSContext")
-                            cutDepthOfContent = path.Count - 1;
-                        else
-                        {
-                            Console.Error.WriteLine(node.GetType().Name);
-                            Debugger.Break();
-                        }
-
-                        Console.Error.WriteLine("SetCutDepthAndCutPath: " + node.GetType().Name + ": " + PrintPath(path));
-                    }
-                    */
-
                     if (identifier == Content)
                     {
                         // Exact match
