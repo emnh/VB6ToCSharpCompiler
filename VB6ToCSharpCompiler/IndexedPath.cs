@@ -30,5 +30,13 @@ namespace VB6ToCSharpCompiler
                 return (NodeTypeName == p.NodeTypeName) && (ChildIndex == p.ChildIndex);
             }
         }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -1774268519;
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(NodeTypeName);
+            hashCode = hashCode * -1521134295 + ChildIndex.GetHashCode();
+            return hashCode;
+        }
     }
 }

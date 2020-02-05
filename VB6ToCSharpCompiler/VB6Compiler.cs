@@ -63,7 +63,7 @@ namespace VB6ToCSharpCompiler
                 }
             }
 
-            var code = data ?? System.IO.File.ReadAllText(fileName);
+            var code = data ?? System.IO.File.ReadAllText(fileName, Encoding.GetEncoding(1252));
 
             // For now, treat forms as modules
             /*
