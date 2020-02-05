@@ -39,11 +39,12 @@ namespace VB6ToCSharpCompiler
 
         private Dictionary<ParseTree, List<ParseTree>> children;
 
-        public io.proleap.vb6.asg.metamodel.Program program;
+        public io.proleap.vb6.asg.metamodel.Program Program { get;  }
 
         public Translator(CompileResult compileResult)
         {
-            this.program = compileResult.Program;
+            if (compileResult == null) throw new ArgumentNullException(nameof(compileResult));
+            this.Program = compileResult.Program;
             children = new Dictionary<ParseTree, List<ParseTree>>();
 
             var visitorCallback = new VisitorCallback()
@@ -155,7 +156,7 @@ namespace VB6ToCSharpCompiler
             foreach (var varDecl in listStmt.variableSubStmt()
                 .JavaListToCSharpList<VisualBasic6Parser.VariableSubStmtContext>())
             {
-                var asgSub = (VariableImpl) program.getASGElementRegistry().getASGElement(varDecl);
+                var asgSub = (VariableImpl) Program.getASGElementRegistry().getASGElement(varDecl);
 
                 var name = asgSub.getName();
 
@@ -194,9 +195,9 @@ namespace VB6ToCSharpCompiler
                 throw new ArgumentNullException(nameof(statements));
             }
 
-            var asg = program.getASGElementRegistry().getASGElement(statement);
+            var asg = Program.getASGElementRegistry().getASGElement(statement);
 
-            var asgParent = program.getASGElementRegistry().getASGElement(statement.getParent());
+            var asgParent = Program.getASGElementRegistry().getASGElement(statement.getParent());
             string parentTypeName = asgParent != null ? asgParent.GetType().Name + "/" : "";
 
             if (asg != null)
@@ -210,7 +211,7 @@ namespace VB6ToCSharpCompiler
             }
         }
 
-        public StatementSyntax GetReturnValueDeclaration(TypeSyntax returnType)
+        public static StatementSyntax GetReturnValueDeclaration(TypeSyntax returnType)
         {
             var name = FunctionReturnValueName;
 
@@ -235,7 +236,7 @@ namespace VB6ToCSharpCompiler
 
         public T GetAsg<T>(ParseTree tree)
         {
-            return (T) program.getASGElementRegistry().getASGElement(tree);
+            return (T) Program.getASGElementRegistry().getASGElement(tree);
         }
 
         
@@ -295,11 +296,12 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetRightHandSide(LetImpl asg, List<StatementSyntax> statementList)
         {
+            if (asg == null) throw new ArgumentNullException(nameof(asg));
             var right = GetExpression(asg.getRightHandValueStmt().getCtx(), statementList);
             return right;
         }
 
-        public ExpressionStatementSyntax GetAssignment(ExpressionSyntax left, ExpressionSyntax right)
+        public static ExpressionStatementSyntax GetAssignment(ExpressionSyntax left, ExpressionSyntax right)
         {
             if (right == null)
             {
@@ -313,116 +315,6 @@ namespace VB6ToCSharpCompiler
             return assignment;
         }
 
-        [Obsolete("We now use patterns instead")]
-        public BlockSyntax GetBodyOld(TypeSyntax returnType, VisualBasic6Parser.BlockContext block)
-        {
-            var comment = SyntaxFactory.Comment("// METHOD BODY");
-
-            var statementList = new List<StatementSyntax>
-            {
-                // TODO: Don't do it if only returning at end of function
-                GetReturnValueDeclaration(returnType),
-
-                SyntaxFactory.EmptyStatement().WithLeadingTrivia(comment)
-            };
-
-            if (block != null)
-            {
-                foreach (var stmt in block.blockStmt().JavaListToCSharpList<VisualBasic6Parser.BlockStmtContext>())
-                {
-                    // statementList.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(SyntaxFactory.Comment("// " + stmt.getText())));
-                    if (stmt.variableStmt() != null)
-                    {
-                        var variableDeclarations = GetVariableDeclaration(stmt.variableStmt());
-                        statementList.AddRange(variableDeclarations);
-                    }
-                    else if (stmt.letStmt() != null)
-                    {
-                        var letStmt = stmt.letStmt();
-                        var asg = (LetImpl) program.getASGElementRegistry().getASGElement(letStmt);
-                        if (asg.isSettingReturnVariable())
-                        {
-                            var left = SyntaxFactory.IdentifierName(FunctionReturnValueName);
-                            var right = GetRightHandSide(asg, statementList);
-                            statementList.Add(GetAssignment(left, right));
-                        }
-                        else
-                        {
-                            string varName =
-                                letStmt
-                                    ?.implicitCallStmt_InStmt()
-                                    ?.iCS_S_VariableOrProcedureCall()
-                                    ?.ambiguousIdentifier()
-                                    ?.IDENTIFIER(0)
-                                    ?.getSymbol()
-                                    ?.getText();
-
-                            if (varName == null)
-                            {
-                                varName = "UNKNOWN_ASSIGNMENT_STATEMENT_TARGET";
-                            }
-                            var left = SyntaxFactory.IdentifierName(varName);
-                            var right = GetRightHandSide(asg, statementList);
-                            statementList.Add(GetAssignment(left, right));
-                        }
-                    }
-                    else
-                    {
-                        // TODO: optimize if necessary
-                        try
-                        {
-                            // Get the type handle of a specified class.
-                            Type myType = stmt.GetType();
-
-                            // Get the methods of the specified class.
-                            var methods = myType.GetMethods();
-
-                            for (int i = 0; i < methods.Length; i++)
-                            {
-                                var method = methods[i];
-                                var methodParameters = method.GetParameters();
-                                if (methodParameters.Length == 0)
-                                {
-                                    var methodName = methods[i].Name;
-                                    if (methodName.EndsWith("Stmt", false, CultureInfo.CurrentCulture))
-                                    {
-                                        try
-                                        {
-                                            var ret = method.Invoke(stmt, new object[0]);
-                                            if (ret != null)
-                                            {
-                                                statementList.Add(SyntaxFactory.EmptyStatement()
-                                                    .WithLeadingTrivia(SyntaxFactory.Comment(
-                                                        "// Statement Type: " + methodName + ":" +
-                                                        (ret != null).ToString())));
-                                            }
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            Console.WriteLine("Exception : {0} ", e.Message);
-                                        }
-                                    }
-                                }
-                                
-                            }
-                        }
-                        catch (Exception)
-                        {
-                            throw;
-                        }
-                    }
-                    var statementComment = SyntaxFactory.Comment("// " + stmt.getText());
-                    statementList[statementList.Count - 1] = statementList[statementList.Count - 1].WithLeadingTrivia(statementComment);
-                }
-            }
-
-            var returnStatement = SyntaxFactory.ReturnStatement(SyntaxFactory.IdentifierName(FunctionReturnValueName));
-            statementList.Add(returnStatement);
-
-            return SyntaxFactory.Block(SyntaxFactory.List(
-                statementList
-            ));
-        }
 
         public List<StatementSyntax> GetStatement(ParseTree tree)
         {
@@ -435,10 +327,10 @@ namespace VB6ToCSharpCompiler
                 returnValue.AddRange(variableDeclarations);
             }
             else if (tree is VisualBasic6Parser.LetStmtContext stmt &&
-                     ((LetImpl) program.getASGElementRegistry().getASGElement(stmt)).isSettingReturnVariable())
+                     ((LetImpl) Program.getASGElementRegistry().getASGElement(stmt)).isSettingReturnVariable())
             {
                 var left = SyntaxFactory.IdentifierName(FunctionReturnValueName);
-                var right = GetRightHandSide(((LetImpl)program.getASGElementRegistry().getASGElement(stmt)), returnValue);
+                var right = GetRightHandSide(((LetImpl)Program.getASGElementRegistry().getASGElement(stmt)), returnValue);
                 returnValue.Add(GetAssignment(left, right));
             }
             else if (tree is VisualBasic6Parser.BlockContext block)
@@ -475,6 +367,7 @@ namespace VB6ToCSharpCompiler
         public void AddBlockStatements(VisualBasic6Parser.BlockContext block, List<StatementSyntax> statementList)
         //public void GetBlockStatement(TypeSyntax returnType, VisualBasic6Parser.BlockContext block, List<StatementSyntax> statementList)
         {
+            if (statementList == null) throw new ArgumentNullException(nameof(statementList));
             if (block != null)
             {
                 foreach (var stmt in block.blockStmt().JavaListToCSharpList<VisualBasic6Parser.BlockStmtContext>())
@@ -536,12 +429,12 @@ namespace VB6ToCSharpCompiler
 
                 if (element.subStmt() != null)
                 {
-                    var method = GetMethod(program, element, attributeLists, modifiers);
+                    var method = GetMethod(Program, element, attributeLists, modifiers);
                     methods.Add(method);
                 }
                 if (element.functionStmt() != null)
                 {
-                    var method = GetMethod(program, element, attributeLists, modifiers);
+                    var method = GetMethod(Program, element, attributeLists, modifiers);
                     methods.Add(method);
                 }
             }
@@ -729,11 +622,14 @@ namespace VB6ToCSharpCompiler
             return string.Join("/", GetPathList(node));
         }
 
-        public static string GetElementProperties(object obj)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "<Pending>")]
+        public static string GetElementProperties(object element)
         {
+            if (element == null) throw new ArgumentNullException(nameof(element));
+
             string s = "";
 
-            var type = obj.GetType();
+            var type = element.GetType();
 
             var methods = type.GetMethods();
 
@@ -747,7 +643,7 @@ namespace VB6ToCSharpCompiler
                     
                     try
                     {
-                        var ret = method.Invoke(obj, new object[0]);
+                        var ret = method.Invoke(element, Array.Empty<object>());
                         if (ret != null)
                         {
                             s += "Prop: " + methodName + ": " + ret.GetType().Name + ": " + ret.ToString() + NewLine;
@@ -767,6 +663,7 @@ namespace VB6ToCSharpCompiler
 
         public string Dump(ParseTree node)
         {
+            if (node == null) throw new ArgumentNullException(nameof(node));
             string s = "";
 
             var asg = GetAsg<ASGElement>(node);
@@ -783,7 +680,7 @@ namespace VB6ToCSharpCompiler
             return s;
         }
 
-        public CompilationUnitSyntax Translate(io.proleap.vb6.asg.metamodel.Program program, ModuleImpl module)
+        public CompilationUnitSyntax Translate(ModuleImpl module)
         {
 
             if (module == null)

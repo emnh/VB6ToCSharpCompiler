@@ -27,7 +27,8 @@ namespace VB6ToCSharpCompiler
     {
         // TODO: implement unused PatternIdentifiers, null paths etc
         private string[] PatternIdentifiers;
-        public List<TokenInfo> PatternTokens { get; set; }
+
+        public List<TokenInfo> PatternTokens => _patternTokens;
 
         /*= new string[] {
             "A", "B"
@@ -45,7 +46,6 @@ namespace VB6ToCSharpCompiler
         private List<IndexedPath>[] CSharpPaths;
 
         private CompileResult VbCompiledPattern;
-        private SyntaxTree CsharpParsedPattern;
 
         private int cutDepthOfContent = -1;
         private int finalCutDepthOfContent = -1;
@@ -53,6 +53,7 @@ namespace VB6ToCSharpCompiler
         private List<IndexedPath> tokenPath;
 
         private string vbWrapperCode;
+        private List<TokenInfo> _patternTokens;
 
         public Pattern(string vbWrapperCode, string vbCode, string csharpString)
         {
@@ -131,8 +132,9 @@ namespace VB6ToCSharpCompiler
                 throw new InvalidOperationException(nameof(cutDepthOfContent) + " not initialized");
         }
 
-        public bool PathContains(List<IndexedPath> path, string typeName)
+        public static bool PathContains(List<IndexedPath> path, string typeName)
         {
+            if (path == null) throw new ArgumentNullException(nameof(path));
             foreach (var item in path)
             {
                 if (item.NodeTypeName == typeName)
@@ -143,8 +145,9 @@ namespace VB6ToCSharpCompiler
             return false;
         }
 
-        public bool IsInsideSubOrFunction(List<IndexedPath> path)
+        public static bool IsInsideSubOrFunction(List<IndexedPath> path)
         {
+            if (path == null) throw new ArgumentNullException(nameof(path));
             foreach (var item in path.Take(path.Count - 1))
             {
                 if (item.NodeTypeName == "SubStmtContext" || item.NodeTypeName == "FunctionStmtContext")
@@ -210,7 +213,7 @@ namespace VB6ToCSharpCompiler
             
             VB6Compiler.Visit(compileResult, visitorCallback);
 
-            PatternTokens = tokensPerNode;
+            _patternTokens = tokensPerNode;
 
             if (cutDepthOfContent == -1)
                 throw new InvalidOperationException(nameof(cutDepthOfContent) + " not initialized");
@@ -218,8 +221,9 @@ namespace VB6ToCSharpCompiler
             return identifiers.ToArray();
         }
 
-        public List<Tuple<int, string>> GetTokens(ParseTree node)
+        public static List<Tuple<int, string>> GetTokens(ParseTree node)
         {
+            if (node == null) throw new ArgumentNullException(nameof(node));
             var tokens = new List<Tuple<int, string>>();
             for (var i = 0; i < node.getChildCount(); i++)
             {
@@ -242,6 +246,7 @@ namespace VB6ToCSharpCompiler
 
         public static string PrintPath(List<IndexedPath> path)
         {
+            if (path == null) throw new ArgumentNullException(nameof(path));
             var list = new List<string>();
             foreach (var item in path) list.Add(item.NodeTypeName + ":" + item.ChildIndex);
 
@@ -251,11 +256,13 @@ namespace VB6ToCSharpCompiler
         //public static string LookupNodeType(string a)
         public static string LookupNodeType(SyntaxNode node)
         {
+            if (node == null) throw new ArgumentNullException(nameof(node));
             return node.GetType().Name;
         }
 
         public static string LookupNodeType(ParseTree node)
         {
+            if (node == null) throw new ArgumentNullException(nameof(node));
             //string a2 = a == "ICS_S_VariableOrProcedureCallContext" ? "FunctionStmtContext" : a;
             //string a2 = a == "ICS_B_ProcedureCallContext" ? "SubStmtContext" : a;
             //string a2 = a == "ICS_B_ProcedureCallContext" ? "ICS_S_ProcedureOrArrayCallContext" : a;
@@ -512,7 +519,7 @@ namespace VB6ToCSharpCompiler
             return null;
         }
 
-        public string GetUniqueIdentifier(string identifier)
+        public static string GetUniqueIdentifier(string identifier)
         {
             return identifier + "ZnobodyZshouldZconflictZwithZthis";
         }
@@ -526,6 +533,9 @@ namespace VB6ToCSharpCompiler
         // Checks if all pattern identifier variables can be found in tree
         public bool CanTranslate(Translator translator, ParseTree tree)
         {
+            if (translator == null) throw new ArgumentNullException(nameof(translator));
+            if (tree == null) throw new ArgumentNullException(nameof(tree));
+            if (tree == null) throw new ArgumentNullException(nameof(tree));
             var canTranslate = true;
             foreach (var path in VbPaths)
             {
@@ -567,7 +577,7 @@ namespace VB6ToCSharpCompiler
                     continue;
                 }
                 var tokenCutPath = tokenInfo.Path.Skip(finalCutDepthOfContent).ToList();
-                var node = LookupNodeFromPath(translator, tree, tokenCutPath, true);
+                var node = LookupNodeFromPath(translator, tree, tokenCutPath, justCheck);
                 if (node == null)
                 {
                     Console.Error.WriteLine("UNMATCHED TOKENS 1: " + VbTreeNodeType + ":" + PrintPath(tokenCutPath) + ":" + PrintPath(tokenInfo.Path));
@@ -589,7 +599,7 @@ namespace VB6ToCSharpCompiler
             return returnValue;
         }
 
-        private void DebugDumpCSharpSyntax(SyntaxNode tree)
+        private static void DebugDumpCSharpSyntax(SyntaxNode tree)
         {
             if (tree == null) throw new ArgumentNullException(nameof(tree));
 

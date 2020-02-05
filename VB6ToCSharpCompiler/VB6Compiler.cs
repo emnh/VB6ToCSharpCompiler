@@ -100,7 +100,7 @@ namespace VB6ToCSharpCompiler
                 returnValue.CSharpCode += "// Module Name: " + modName + "\r\n";
                 if (translate)
                 {
-                    var syntaxTree = new Translator(returnValue).Translate(program, module);
+                    var syntaxTree = new Translator(returnValue).Translate(module);
                     returnValue.CSharpCode += syntaxTree.ToFullString() + "\r\n";
                 }
                 //syntaxTree.

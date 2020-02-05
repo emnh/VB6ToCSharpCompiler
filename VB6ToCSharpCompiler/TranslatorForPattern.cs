@@ -247,7 +247,7 @@ namespace VB6ToCSharpCompiler
                     pattern = patternText.Compile();
                 } catch (VbParserException e)
                 {
-                    Console.Error.WriteLine("Pattern Compile Failed: " + patternText.LogValue());
+                    Console.Error.WriteLine("Pattern Compile Failed: " + patternText.LogValue() + ": " + e.toString());
                     throw;
                 }
 

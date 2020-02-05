@@ -31,6 +31,7 @@ namespace VB6ToCSharpCompiler
 
         public List<ExpressionSyntax> GetGoodChildren(ParseTree tree, List<StatementSyntax> statements)
         {
+            if (tree == null) throw new ArgumentNullException(nameof(tree));
             var returnValue = new List<ExpressionSyntax>();
             for (int i = 0; i < tree.getChildCount(); i++)
             {
@@ -59,46 +60,6 @@ namespace VB6ToCSharpCompiler
             return null;
         }
 
-        public ExpressionSyntax GetExpression(ApiProcedureCallImpl asg, List<StatementSyntax> statements)
-        {
-            throw new InvalidOperationException("Prefer patterns over this method.");
-
-            var tree = asg.getCtx();
-
-            var callName = asg.getApiProcedure().getName();
-
-            var argList = new List<ArgumentSyntax>();
-
-            GetArguments(statements, tree, argList);
-
-            var callSyntax =
-                SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.IdentifierName(callName),
-                    SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(argList)));
-
-            return callSyntax;
-        }
-
-        public ExpressionSyntax GetExpression(FunctionCallImpl asg, List<StatementSyntax> statements)
-        {
-            throw new InvalidOperationException("Prefer patterns over this method.");
-
-            var tree = asg.getCtx();
-
-            var callName = asg.getFunction().getName();
-
-            var argList = new List<ArgumentSyntax>();
-
-            GetArguments(statements, tree, argList);
-
-            var callSyntax =
-                SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.IdentifierName(callName),
-                    SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(argList)));
-
-            return callSyntax;
-        }
-
         private void GetArguments(List<StatementSyntax> statements, ParserRuleContext tree, List<ArgumentSyntax> argList)
         {
             for (int i = 0; i < tree.getChildCount(); i++)
@@ -123,30 +84,7 @@ namespace VB6ToCSharpCompiler
             }
         }
 
-        
-
-        public ExpressionSyntax GetExpression(CallValueStmtImpl asg, List<StatementSyntax> statements)
-        {
-            throw new InvalidOperationException("Prefer patterns over this method.");
-            if (asg == null)
-            {
-                throw new ArgumentNullException(nameof(asg));
-            }
-            return GetFirstGoodChild(nameof(CallValueStmtImpl), asg.getCtx(), statements);
-        }
-
-        public ExpressionSyntax GetExpression(LiteralValueStmtImpl asg, List<StatementSyntax> statements)
-        {
-            throw new InvalidOperationException("Prefer patterns over this method.");
-            if (asg == null)
-            {
-                throw new ArgumentNullException(nameof(asg));
-            }
-
-            return GetFirstGoodChild(nameof(LiteralValueStmtImpl), asg.getCtx(), statements);
-        }
-
-        public ExpressionSyntax GetExpression(LiteralImpl asg, List<StatementSyntax> statements)
+        public static ExpressionSyntax GetExpression(LiteralImpl asg)
         {
             if (asg == null)
             {
@@ -161,23 +99,23 @@ namespace VB6ToCSharpCompiler
             }
             else if (asg.getCtx().INTEGERLITERAL() != null)
             {
-                if (asg.getValue().EndsWith("#"))
+                if (asg.getValue().EndsWith("#", false, CultureInfo.InvariantCulture))
                 {
                     return
                         SyntaxFactory.LiteralExpression(
                             SyntaxKind.NumericLiteralExpression, 
-                            SyntaxFactory.Literal(Double.Parse(asg.getValue().Replace("#", ""))));
+                            SyntaxFactory.Literal(double.Parse(asg.getValue().Replace("#", ""), NumberFormatInfo.InvariantInfo)));
                 }
                 else
                 {
                     return SyntaxFactory.LiteralExpression(
                         SyntaxKind.NumericLiteralExpression, 
-                        SyntaxFactory.Literal(Int32.Parse(asg.getValue())));
+                        SyntaxFactory.Literal(int.Parse(asg.getValue(), NumberFormatInfo.InvariantInfo)));
                 }
             }
             else if (asg.getCtx().DOUBLELITERAL() != null)
             {
-                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(Double.Parse(asg.getValue())));
+                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(double.Parse(asg.getValue(), NumberFormatInfo.InvariantInfo)));
             }
             else if (asg.getCtx().FILENUMBER() != null)
             {
@@ -185,7 +123,7 @@ namespace VB6ToCSharpCompiler
                 var num = asg.getValue().Trim('#');
                 if (num.All(c => char.IsDigit(c)))
                 {
-                    return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(int.Parse(num)));
+                    return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(int.Parse(num, NumberFormatInfo.InvariantInfo)));
                 }
                 else
                 {
@@ -211,13 +149,13 @@ namespace VB6ToCSharpCompiler
             {
                 throw new NotImplementedException("node type: " + asg.getCtx().GetType().Name + ": " + asg.getCtx().getText());
                 // TODO: A bit risky. Assumes that literals are same in VB6 and C#.
-                return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(asg.getValue()));
+                //return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(asg.getValue()));
             }
 
             //return GetExpression(asg.getCtx().getChild(0), statements);
         }
 
-        public ExpressionSyntax HandleBaseTypeContext(VisualBasic6Parser.BaseTypeContext node, List<StatementSyntax> statements)
+        public static ExpressionSyntax HandleBaseTypeContext(VisualBasic6Parser.BaseTypeContext node)
         {
             if (node == null)
             {
@@ -232,71 +170,26 @@ namespace VB6ToCSharpCompiler
             }
             else if (node.INTEGER() != null)
             {
-                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(Int32.Parse(node.getText())));
+                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(int.Parse(node.getText(), NumberFormatInfo.InvariantInfo)));
             }
             else if (node.DOUBLE() != null)
             {
-                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(Double.Parse(node.getText())));
+                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(double.Parse(node.getText(), NumberFormatInfo.InvariantInfo)));
             }
             else
             {
                 throw new NotImplementedException("node type");
                 // TODO: A bit risky. Assumes that literals are same in VB6 and C#.
-                return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(node.getText()));
+                //return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(node.getText()));
             }
 
             //return GetExpression(asg.getCtx().getChild(0), statements);
         }
 
-        public ExpressionSyntax GetExpression(CallDelegateImpl asg, List<StatementSyntax> statements)
-        {
-            throw new InvalidOperationException("Prefer patterns over this method.");
-            if (asg == null)
-            {
-                throw new ArgumentNullException(nameof(asg));
-            }
-
-            return GetFirstGoodChild(nameof(CallDelegateImpl),asg.getCtx(), statements);
-        }
-
-        /*
-        public ExpressionSyntax GetExpression(LetImpl asg, List<StatementSyntax> statements)
-        {
-            if (asg == null)
-            {
-                throw new ArgumentNullException(nameof(asg));
-            }
-
-            return GetFirstGoodChild(nameof(LetImpl), asg.getCtx(), statements);
-        }
-        */
-
-        public ExpressionSyntax GetExpression(ArgCallImpl asg, List<StatementSyntax> statements)
-        {
-            throw new InvalidOperationException("Prefer patterns over this method.");
-            if (asg == null)
-            {
-                throw new ArgumentNullException(nameof(asg));
-            }
-
-            return SyntaxFactory.IdentifierName(asg.getArg().getName());
-        }
-
-        public ExpressionSyntax GetExpression(StringValueStmtImpl asg, List<StatementSyntax> statements)
-        {
-            throw new InvalidOperationException("Prefer patterns over this method.");
-            var ctx = asg.getCtx();
-            var children = GetGoodChildren(asg.getCtx(), statements);
-            if (children.Count < 2)
-            {
-                throw new NotImplementedException("String add < 2: " + ctx.GetType().Name + ": " + ctx.getText());
-            }
-            return SyntaxFactory.BinaryExpression(SyntaxKind.AddExpression, children[0], children[1]);
-        }
-
         // TODO: make sure all calls are resolving
         public ExpressionSyntax GetExpression(UndefinedCallImpl asg, List<StatementSyntax> statements)
         {
+            if (asg == null) throw new ArgumentNullException(nameof(asg));
             var tree = asg.getCtx();
 
             var callName = asg.getName();
@@ -305,29 +198,6 @@ namespace VB6ToCSharpCompiler
 
             GetArguments(statements, tree, argList);
 
-            /*
-            for (int i = 0; i < tree.getChildCount(); i++)
-            {
-                var child = tree.getChild(i);
-
-                if (child is VisualBasic6Parser.ArgsCallContext)
-                {
-                    for (int j = 0; j < child.getChildCount(); j++)
-                    {
-                        var argChild = child.getChild(j);
-                        if (argChild != null)
-                        {
-                            var expr = GetExpression(argChild, statements);
-                            if (expr != null)
-                            {
-                                argList.Add(SyntaxFactory.Argument(expr));
-                            }
-                        }
-                    }
-                }
-            }
-            */
-
             var callSyntax =
                 SyntaxFactory.InvocationExpression(
                     SyntaxFactory.IdentifierName("UndefinedCall_" + callName),
@@ -335,87 +205,6 @@ namespace VB6ToCSharpCompiler
 
             return callSyntax;
         }
-
-        public ExpressionSyntax GetExpression(ArgValueAssignmentImpl asg, List<StatementSyntax> statements)
-        {
-            throw new InvalidOperationException("Prefer patterns over this method.");
-            if (asg == null)
-            {
-                throw new ArgumentNullException(nameof(asg));
-            }
-
-            return GetFirstGoodChild(nameof(ArgValueAssignmentImpl), asg.getCtx(), statements);
-        }
-
-        public ExpressionSyntax GetExpression(IfConditionImpl asg, List<StatementSyntax> statements)
-        {
-            throw new InvalidOperationException("Prefer patterns over this method.");
-            if (asg == null)
-            {
-                throw new ArgumentNullException(nameof(asg));
-            }
-
-            return GetFirstGoodChild(nameof(IfConditionImpl), asg.getCtx(), statements);
-        }
-
-        public ExpressionSyntax GetExpression(TypeElementCallImpl asg, List<StatementSyntax> statements)
-        {
-            throw new InvalidOperationException("Prefer patterns over this method.");
-
-            if (asg == null)
-            {
-                throw new ArgumentNullException(nameof(asg));
-            }
-
-            return GetFirstGoodChild(nameof(IfConditionImpl), asg.getCtx(), statements);
-        }
-
-        public ExpressionSyntax GetExpression(ConstantCallImpl asg, List<StatementSyntax> statements)
-        {
-            throw new InvalidOperationException("Prefer patterns over this method.");
-            if (asg == null)
-            {
-                throw new ArgumentNullException(nameof(asg));
-            }
-
-            return GetFirstGoodChild(nameof(ConstantCallImpl), asg.getCtx(), statements);
-        }
-
-        /*
-        public ExpressionSyntax GetExpression(MembersCallImpl asg, List<StatementSyntax> statements)
-        {
-            if (asg == null)
-            {
-                throw new ArgumentNullException(nameof(asg));
-            }
-
-            //var left = GetExpression(asg.getCtx().getChild(0), statements);
-            var left = GetFirstGoodChild(nameof(MembersCallImpl), asg.getCtx(), statements);
-            var right = asg.getName(); // GetExpression(asg.getCtx().getChild(1)), statements);
-            return SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, left, SyntaxFactory.Token(SyntaxKind.DotToken), SyntaxFactory.IdentifierName(right));
-            //return GetFirstGoodChild(asg.getCtx(), statements);
-        }*/
-
-        public ExpressionSyntax GetExpression(VariableCallImpl asg, List<StatementSyntax> statements)
-        {
-            throw new InvalidOperationException("Prefer patterns over this method.");
-
-            if (asg == null)
-            {
-                throw new ArgumentNullException(nameof(asg));
-            }
-
-            //var left = GetExpression(asg.getCtx().getChild(0), statements);
-            //var left = GetFirstGoodChild(asg.getCtx(), statements);
-            //var right = asg.getName(); // GetExpression(asg.getCtx().getChild(1)), statements);
-            //return SyntaxFactory.MemberAccessExpression(SyntaxKind.MemberBindingExpression, left, SyntaxFactory.Token(SyntaxKind.DotToken), SyntaxFactory.IdentifierName(right));
-            //return GetFirstGoodChild(asg.getCtx(), statements);
-            var name = asg.getVariable().getName();
-            return SyntaxFactory.IdentifierName(name);
-        }
-
-
-
 
         public ExpressionSyntax GetExpression(ParseTree tree, List<StatementSyntax> statements)
         {
@@ -428,7 +217,7 @@ namespace VB6ToCSharpCompiler
                 throw new ArgumentNullException(nameof(tree));
             }
 
-            var asg = this.translator.program.getASGElementRegistry().getASGElement(tree);
+            var asg = this.translator.Program.getASGElementRegistry().getASGElement(tree);
 
             if (TranslatorForPattern.CanTranslate(translator, tree))
             {
@@ -452,7 +241,7 @@ namespace VB6ToCSharpCompiler
 
                     if (methodParameters.Length > 0 && asg != null && methodParameters[0].ParameterType == asg.GetType())
                     {
-                        Console.Error.WriteLine("Invoking specific GetExpression on: " + tree.getText());
+                        Console.Error.WriteLine("OBSOLETE: Invoking specific GetExpression on: " + tree.getText());
                         //statements.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(SyntaxFactory.Comment("// Invoking GetExpression: " + asg.GetType().Name + ":" + asg.getCtx().depth())));
                         return (ExpressionSyntax)method.Invoke(this, new object[] { asg, statements });
                     }
@@ -485,7 +274,7 @@ namespace VB6ToCSharpCompiler
                 return GetFirstGoodChild(nameof(ConstantCallImpl), tree, statements);
             } else if (tree is VisualBasic6Parser.BaseTypeContext btc)
             {
-                return HandleBaseTypeContext(btc, statements);
+                return HandleBaseTypeContext(btc);
             } else if (tree is VisualBasic6Parser.TypeHintContext)
             {
                 // Ignore type hint context
@@ -503,7 +292,7 @@ namespace VB6ToCSharpCompiler
             // TODO: Reenable.
             throw new InvalidOperationException("Expression returned null");
 
-            return null;
+            //return null;
         }
     }
 }

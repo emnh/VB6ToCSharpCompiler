@@ -10,7 +10,7 @@ namespace VB6ToCSharpCompiler
 {
     public class CustomCSharpSyntaxWalker : CSharpSyntaxWalker
     {
-        public CsharpVisitorCallback VisitorCallback;
+        public CsharpVisitorCallback VisitorCallback { get; }
 
         public CustomCSharpSyntaxWalker(CsharpVisitorCallback callback)
         {
