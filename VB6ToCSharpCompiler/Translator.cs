@@ -37,7 +37,7 @@ namespace VB6ToCSharpCompiler
         // TODO: Move
         public const string NewLine = "\r\n";
 
-        private Dictionary<ParseTree, List<ParseTree>> children;
+        private readonly Dictionary<ParseTree, List<ParseTree>> children;
 
         public io.proleap.vb6.asg.metamodel.Program Program { get;  }
 
@@ -99,25 +99,6 @@ namespace VB6ToCSharpCompiler
 
             //return "UknownType_" + vbType;
             return vbType;
-        }
-
-        [Obsolete("We use ASG, not parser context.")]
-        public static string LookupType(VisualBasic6Parser.TypeContext typeContext)
-        {
-            if (typeContext == null)
-            {
-                throw new ArgumentNullException(nameof(typeContext));
-            }
-
-            if (typeContext.baseType() != null)
-            {
-                if (typeContext.baseType().BOOLEAN() != null)
-                {
-                    return typeof(bool).Name;
-                }
-            }
-
-            return "unknownType";
         }
 
         public static string LookupType(io.proleap.vb6.asg.metamodel.type.Type typeContext)
