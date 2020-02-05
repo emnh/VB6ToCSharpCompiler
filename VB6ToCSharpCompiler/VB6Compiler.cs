@@ -116,7 +116,7 @@ namespace VB6ToCSharpCompiler
                     MultilineCloseReplacement,
                     RegexOptions.IgnoreCase);
 
-            Console.Error.WriteLine("CODE: " + code);
+            //Console.Error.WriteLine("CODE: " + code);
 
             code = code.Replace("\r", "");
 
