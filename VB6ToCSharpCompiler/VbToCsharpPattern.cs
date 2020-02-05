@@ -40,19 +40,16 @@ namespace VB6ToCSharpCompiler
 
         public string VbTreeNodeType { get; set; }
         public string VbCode { get; set; }
-        private string csharpString;
+        private readonly string csharpString;
 
         private List<IndexedPath>[] VbPaths;
-        private List<IndexedPath>[] CSharpPaths;
-
-        private CompileResult VbCompiledPattern;
 
         private int cutDepthOfContent = -1;
         private int finalCutDepthOfContent = -1;
         private List<IndexedPath> cutPath;
         private List<IndexedPath> tokenPath;
 
-        private string vbWrapperCode;
+        private readonly string vbWrapperCode;
         private List<TokenInfo> _patternTokens;
 
         public VbToCsharpPattern(string vbWrapperCode, string vbCode, string csharpString)
@@ -61,7 +58,7 @@ namespace VB6ToCSharpCompiler
             this.VbCode = vbCode;
             this.csharpString = csharpString;
 
-            VbCompiledPattern = VbParsePattern(vbCode);
+            VbParsePattern(vbCode);
             //CsharpParsedPattern = CSharpParsePattern(csharpString);
             Console.Error.WriteLine("ASGType: " + VbTreeNodeType);
             foreach (var path in VbPaths) Console.Error.WriteLine("Path: " + PrintPath(path));
@@ -313,7 +310,7 @@ namespace VB6ToCSharpCompiler
             return node;
         }
 
-        public CompileResult VbParsePattern(string pattern)
+        public void VbParsePattern(string pattern)
         {
             SetCutDepthAndCutPath();
 
@@ -417,8 +414,6 @@ namespace VB6ToCSharpCompiler
             }
 
             VbPaths = cutPaths;
-
-            return compileResult;
         }
 
         public static List<IndexedPath> GetExtendedPathList(SyntaxNode node)
@@ -447,76 +442,6 @@ namespace VB6ToCSharpCompiler
 
             s.Reverse();
             return s;
-        }
-
-        [Obsolete("We changed to string rewriting so this method is not needed")]
-        public SyntaxTree CSharpParsePattern(string pattern)
-        {
-            var tree = SyntaxFactory.ParseExpression(pattern);
-
-            // TODO: reduce code duplication
-
-            var paths = new List<IndexedPath>[PatternIdentifiers.Length];
-            SyntaxNode root = null;
-
-            var callback = new CsharpVisitorCallback()
-            {
-                Callback = node =>
-                {
-                    if (root == null) root = node;
-
-                    var i = 0;
-                    foreach (var identifier in PatternIdentifiers)
-                    {
-                        Console.Error.WriteLine("Node: " + node.Kind() + ": " + node.ToFullString());
-                        if (node.ToFullString().Trim() == identifier)
-                        {
-                            var path = GetExtendedPathList(node);
-                            if (paths[i] == null) paths[i] = path;
-                        }
-
-                        i++;
-                    }
-                }
-            };
-
-            var walker = new CustomCSharpSyntaxWalker(callback);
-            walker.Visit(tree);
-
-            foreach (var path in paths)
-                if (path == null)
-                    throw new InvalidOperationException(nameof(path) + " is null");
-
-            CSharpPaths = paths;
-
-            /*
-            var minDepth = maxDepths.Min();
-            var lowestCommonDepth = 0;
-            for (int i = 0; i < minDepth; i++)
-            {
-                var allEqual = true;
-                foreach (var path in paths)
-                {
-                    if (!path[i].Equals(paths[0][i]))
-                    {
-                        allEqual = false;
-                        break;
-                    }
-                }
-                if (allEqual)
-                {
-                    lowestCommonDepth = i;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            csharpRoot = paths[0][lowestCommonDepth].NodeTypeName;
-            VbPaths = paths;
-            */
-
-            return null;
         }
 
         public static string GetUniqueIdentifier(string identifier)
@@ -630,7 +555,6 @@ namespace VB6ToCSharpCompiler
                 replacement = Regex.Replace(replacement, "\\b" + identifier + "\\b", GetUniqueIdentifier(identifier));
             }
 
-            var translations = new SyntaxTree[PatternIdentifiers.Length];
             var pathIndex = 0;
             foreach (var identifier in PatternIdentifiers)
             {
@@ -667,8 +591,7 @@ namespace VB6ToCSharpCompiler
                 pathIndex++;
             }
 
-            // TODO: what about SyntaxFactory.ParseStatement()? add support for it.
-            SyntaxNode rewritten = null;
+            SyntaxNode rewritten;
             if (Translator.IsStatement(tree))
                 rewritten = SyntaxFactory.ParseStatement(replacement);
             else
