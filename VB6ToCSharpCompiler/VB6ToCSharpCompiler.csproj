@@ -182,7 +182,7 @@
     <Compile Include="CustomCSharpSyntaxWalker.cs" />
     <Compile Include="IndexedPath.cs" />
     <Compile Include="JavaUtil.cs" />
-    <Compile Include="Pattern.cs" />
+    <Compile Include="VbToCsharpPattern.cs" />
     <Compile Include="PatternText.cs" />
     <Compile Include="TokenInfo.cs" />
     <Compile Include="TranslatorForExpression.cs" />

@@ -19,7 +19,7 @@ namespace VB6ToCSharpCompiler
     public static class TranslatorForPattern
     {
 
-        private static Dictionary<string, List<Pattern>> compiledPatterns;
+        private static Dictionary<string, List<VbToCsharpPattern>> compiledPatterns;
         //private static List<Pattern> compiledPatternsList;
 
         // Statement pattern
@@ -238,10 +238,10 @@ namespace VB6ToCSharpCompiler
                     */
             };
 
-            compiledPatterns = new Dictionary<string, List<Pattern>>();
+            compiledPatterns = new Dictionary<string, List<VbToCsharpPattern>>();
             foreach (var patternText in patterns)
             {
-                Pattern pattern = null;
+                VbToCsharpPattern pattern = null;
                 try
                 {
                     pattern = patternText.Compile();
@@ -257,7 +257,7 @@ namespace VB6ToCSharpCompiler
 
                 if (!compiledPatterns.ContainsKey(pattern.VbTreeNodeType))
                 {
-                    compiledPatterns[pattern.VbTreeNodeType] = new List<Pattern>();
+                    compiledPatterns[pattern.VbTreeNodeType] = new List<VbToCsharpPattern>();
                 }
                 compiledPatterns[pattern.VbTreeNodeType].Add(pattern);
             }
@@ -269,7 +269,7 @@ namespace VB6ToCSharpCompiler
                     Console.Error.WriteLine("PATTERNSTATUS: " + pat2.VbCode + ": " + pat2.VbTreeNodeType + ": " + pat2.GetLogPath());
                     foreach (var tki in pat2.PatternTokens)
                     {
-                        Console.Error.WriteLine("PATTERNTOKENS: " + Pattern.PrintPath(tki.Path));
+                        Console.Error.WriteLine("PATTERNTOKENS: " + VbToCsharpPattern.PrintPath(tki.Path));
                         Console.Error.WriteLine("PATTERNTOKENS: " +
                                                 string.Join("@", tki.Tokens));
                     }
@@ -285,7 +285,7 @@ namespace VB6ToCSharpCompiler
             {
                 throw new ArgumentNullException(nameof(tree));
             }
-            var name = Pattern.LookupNodeType(tree);
+            var name = VbToCsharpPattern.LookupNodeType(tree);
             var canTranslate = compiledPatterns.ContainsKey(name);
             if (canTranslate)
             {
@@ -329,7 +329,7 @@ namespace VB6ToCSharpCompiler
             {
                 throw new ArgumentNullException(nameof(tree));
             }
-            var name = Pattern.LookupNodeType(tree);
+            var name = VbToCsharpPattern.LookupNodeType(tree);
             var patterns = compiledPatterns[name];
             foreach (var pattern in patterns)
             {

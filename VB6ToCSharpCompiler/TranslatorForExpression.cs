@@ -227,7 +227,7 @@ namespace VB6ToCSharpCompiler
             var goodChildren = GetGoodChildren(tree, statements);
             if (goodChildren.Count == 1)
             {
-                Console.Error.WriteLine("FORWARDED: " + Pattern.LookupNodeType(tree) + ": " + tree.getText());
+                Console.Error.WriteLine("FORWARDED: " + VbToCsharpPattern.LookupNodeType(tree) + ": " + tree.getText());
                 return goodChildren[0];
             }
 
@@ -282,8 +282,8 @@ namespace VB6ToCSharpCompiler
                 return null;
             }
 
-            var explanation = "// " + Pattern.LookupNodeType(tree) + " not in [" + TranslatorForPattern.DocPatterns() + "]" + Translator.NewLine;
-            Console.Error.WriteLine(nameof(GetExpression) + ": " + Pattern.LookupNodeType(tree) + ": " + tree.getText());
+            var explanation = "// " + VbToCsharpPattern.LookupNodeType(tree) + " not in [" + TranslatorForPattern.DocPatterns() + "]" + Translator.NewLine;
+            Console.Error.WriteLine(nameof(GetExpression) + ": " + VbToCsharpPattern.LookupNodeType(tree) + ": " + tree.getText());
             Console.Error.WriteLine(explanation);
             if (asg != null)
             {

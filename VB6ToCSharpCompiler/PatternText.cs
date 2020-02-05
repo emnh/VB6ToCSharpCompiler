@@ -71,9 +71,9 @@ End Function";
             CSharpCode = csharpCode;
         }
 
-        public Pattern Compile()
+        public VbToCsharpPattern Compile()
         {
-            return new Pattern(VbWrapperCode, VbCode, CSharpCode);
+            return new VbToCsharpPattern(VbWrapperCode, VbCode, CSharpCode);
         }
 
         public string LogValue()
