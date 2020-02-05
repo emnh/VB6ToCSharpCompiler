@@ -224,7 +224,7 @@ namespace VB6ToCSharpCompiler
         public ExpressionSyntax GetExpression(ParseTree tree, List<StatementSyntax> statements)
         {
             var tfe = new TranslatorForExpression(this);
-            return tfe.GetExpression(tree, statements);
+            return tfe.GetExpression(tree);
         }
 
         public static bool IsStatement(ParseTree tree)

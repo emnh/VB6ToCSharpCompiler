@@ -76,6 +76,9 @@ namespace VB6ToCSharpCompiler
                 S("Select Case A\n Case B\n C\n Case D\n E\n Case F\n G\n Case H\n I\n Case J, K\n L\n Case Else\n M\n End Select",
                     "switch (A) { case B: C; break; case D: E; case F: G; case H: I; case J: case K: L; break; default: M; };"),
                 // 4 clauses + default, special case
+                S("Select Case A\n Case B\n C\n Case D\n E\n Case F\n G\n Case K, L, M, N, O\n I\n Case Else\n P\n End Select",
+                    "switch (A) { case B: C; break; case D: E; case F: G; case K: case L: case M: case N: case O: I; break; default: P; };"),
+                // 4 clauses + default, special case
                 S("Select Case A\n Case B,J\n C\n Case D\n E\n Case F\n G\n Case Is >= K\n I\n Case Else\n L\n End Select",
                     "switch (A) { case B: case J: C; break; case D: E; case F: G; case int i when i >= K: I; break; default: L; };"),
                 // 2 clauses, double cases

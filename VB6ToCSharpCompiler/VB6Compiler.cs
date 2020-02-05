@@ -4,9 +4,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using com.sun.org.apache.xpath.@internal.functions;
+using ikvm.extensions;
 using io.proleap.vb6;
 using io.proleap.vb6.asg.metamodel.impl;
 using io.proleap.vb6.asg.@params.impl;
@@ -47,6 +50,32 @@ namespace VB6ToCSharpCompiler
             }
         }
 
+        public static string MultilineCloseReplacement(Match m)
+        {
+            if (m is null)
+            {
+                throw new ArgumentNullException(nameof(m));
+            }
+
+            string x = m.ToString();
+            if (!x.Contains(","))
+            {
+                return x;
+            }
+
+            x = x.Trim();
+            var parts = x.split(@"\s+", 2);
+            var parts2 = parts[1].split(",");
+            string join = Translator.NewLine;
+            foreach (var part in parts2)
+            {
+                join += parts[0].Trim() + " " + part.Trim() + Translator.NewLine;
+            }
+            Console.Error.WriteLine("CLOSE: " + m.toString() + ", JOIN: " + join);
+            return join;
+            //return x.ToUpper();
+        }
+
         public static CompileResult Compile(string fileName, string data = null, bool translate = true)
         {
             CompileResult returnValue = new CompileResult();
@@ -64,6 +93,8 @@ namespace VB6ToCSharpCompiler
             }
 
             var code = data ?? System.IO.File.ReadAllText(fileName, Encoding.GetEncoding(1252));
+            //var code = data ?? System.IO.File.ReadAllText(fileName);
+            //var code = data ?? System.IO.File.ReadAllText(fileName, Encoding.GetEncoding("ISO-8859-1"));
 
             // For now, treat forms as modules
             /*
@@ -77,13 +108,26 @@ namespace VB6ToCSharpCompiler
             returnValue.VBCode = code;
             returnValue.FileName = fileName;
 
-            var inputFile = new java.io.File(fileName);
+            // Workaround a bug in the ProLeap parser with regard to multiple files closed on same line
+            code =
+                Regex.Replace(
+                    code,
+                    @"\n\s*Close\s*[^\n]*",
+                    MultilineCloseReplacement,
+                    RegexOptions.IgnoreCase);
+
+            Console.Error.WriteLine("CODE: " + code);
 
             code = code.Replace("\r", "");
 
+            var parserImpl = new VbParserParamsImpl();
+
+            //parserImpl.setCharset(java.nio.charset.Charset.forName("Cp1252"));
+            //parserImpl.setCharset(java.nio.charset.Charset.forName("UTF16"));
+
             io.proleap.vb6.asg.metamodel.Program program =
                 new io.proleap.vb6.asg.runner.impl.VbParserRunnerImpl().analyzeCode(code, fileName,
-                    new VbParserParamsImpl());
+                    parserImpl);
 
             returnValue.Program = program;
 

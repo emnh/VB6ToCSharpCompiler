@@ -29,14 +29,14 @@ namespace VB6ToCSharpCompiler
             this.translator = translator;
         }
 
-        public List<ExpressionSyntax> GetGoodChildren(ParseTree tree, List<StatementSyntax> statements)
+        public List<ExpressionSyntax> GetGoodChildren(ParseTree tree)
         {
             if (tree == null) throw new ArgumentNullException(nameof(tree));
             var returnValue = new List<ExpressionSyntax>();
             for (int i = 0; i < tree.getChildCount(); i++)
             {
                 var child = tree.getChild(i);
-                var expr = GetExpression(child, statements);
+                var expr = GetExpression(child);
                 if (expr != null)
                 {
                     returnValue.Add(expr);
@@ -45,10 +45,10 @@ namespace VB6ToCSharpCompiler
             return returnValue;
         }
 
-        public ExpressionSyntax GetFirstGoodChild(string forwardType, ParseTree tree, List<StatementSyntax> statements)
+        public ExpressionSyntax GetFirstGoodChild(string forwardType, ParseTree tree)
         {
             Console.Error.WriteLine("GetFirstGoodChild: " + forwardType);
-            var list = GetGoodChildren(tree, statements);
+            var list = GetGoodChildren(tree);
             if (list.Count > 1)
             {
                 throw new InvalidOperationException("More than one good child.");
@@ -60,7 +60,7 @@ namespace VB6ToCSharpCompiler
             return null;
         }
 
-        private void GetArguments(List<StatementSyntax> statements, ParserRuleContext tree, List<ArgumentSyntax> argList)
+        private void GetArguments(ParserRuleContext tree, List<ArgumentSyntax> argList)
         {
             for (int i = 0; i < tree.getChildCount(); i++)
             {
@@ -73,7 +73,7 @@ namespace VB6ToCSharpCompiler
                         var argChild = child.getChild(j);
                         if (argChild != null)
                         {
-                            var expr = GetExpression(argChild, statements);
+                            var expr = GetExpression(argChild);
                             if (expr != null)
                             {
                                 argList.Add(SyntaxFactory.Argument(expr));
@@ -187,7 +187,7 @@ namespace VB6ToCSharpCompiler
         }
 
         // TODO: make sure all calls are resolving
-        public ExpressionSyntax GetExpression(UndefinedCallImpl asg, List<StatementSyntax> statements)
+        public ExpressionSyntax GetExpression(UndefinedCallImpl asg)
         {
             if (asg == null) throw new ArgumentNullException(nameof(asg));
             var tree = asg.getCtx();
@@ -196,7 +196,7 @@ namespace VB6ToCSharpCompiler
 
             var argList = new List<ArgumentSyntax>();
 
-            GetArguments(statements, tree, argList);
+            GetArguments(tree, argList);
 
             var callSyntax =
                 SyntaxFactory.InvocationExpression(
@@ -206,12 +206,8 @@ namespace VB6ToCSharpCompiler
             return callSyntax;
         }
 
-        public ExpressionSyntax GetExpression(ParseTree tree, List<StatementSyntax> statements)
+        public ExpressionSyntax GetExpression(ParseTree tree)
         {
-            if (statements == null)
-            {
-                throw new ArgumentNullException(nameof(statements));
-            }
             if (tree == null)
             {
                 throw new ArgumentNullException(nameof(tree));
@@ -224,7 +220,7 @@ namespace VB6ToCSharpCompiler
                 return TranslatorForPattern.TranslateExpression(this.translator, tree);
             }
 
-            var goodChildren = GetGoodChildren(tree, statements);
+            var goodChildren = GetGoodChildren(tree);
             if (goodChildren.Count == 1)
             {
                 Console.Error.WriteLine("FORWARDED: " + VbToCsharpPattern.LookupNodeType(tree) + ": " + tree.getText());
@@ -243,7 +239,7 @@ namespace VB6ToCSharpCompiler
                     {
                         Console.Error.WriteLine("OBSOLETE: Invoking specific GetExpression on: " + tree.getText());
                         //statements.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(SyntaxFactory.Comment("// Invoking GetExpression: " + asg.GetType().Name + ":" + asg.getCtx().depth())));
-                        return (ExpressionSyntax)method.Invoke(this, new object[] { asg, statements });
+                        return (ExpressionSyntax)method.Invoke(this, new object[] { asg });
                     }
                 }
             }
@@ -271,7 +267,7 @@ namespace VB6ToCSharpCompiler
                 return SyntaxFactory.IdentifierName(name);
             } else if (tree is VisualBasic6Parser.ArgsCallContext)
             {
-                return GetFirstGoodChild(nameof(ConstantCallImpl), tree, statements);
+                return GetFirstGoodChild(nameof(ConstantCallImpl), tree);
             } else if (tree is VisualBasic6Parser.BaseTypeContext btc)
             {
                 return HandleBaseTypeContext(btc);
