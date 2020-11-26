@@ -75,6 +75,9 @@ namespace VB6ToCSharpCompiler
         {
             var node = (ParseTree) treVB6AST.SelectedNode.Tag;
             txtDebug.Text = translator.Dump(node) + "\r\n";
+            
+            var asiList = ASTSequenceItem.Create(node);
+            txtDebug.Text += ASTSequenceItem.ToString(asiList) + "\r\n";
         }
 
         private void txtDebug_TextChanged(object sender, EventArgs e)

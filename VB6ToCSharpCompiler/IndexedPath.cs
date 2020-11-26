@@ -10,11 +10,14 @@ namespace VB6ToCSharpCompiler
     {
         public string NodeTypeName { get; set; }
         public int ChildIndex { get; set; }
+        
+        public string Token { get; set;  }
 
-        public IndexedPath(string nodeTypeName, int childIndex)
+        public IndexedPath(string nodeTypeName, int childIndex, string token)
         {
             NodeTypeName = nodeTypeName;
             ChildIndex = childIndex;
+            Token = token;
         }
 
         public override bool Equals(Object obj)
@@ -37,6 +40,11 @@ namespace VB6ToCSharpCompiler
             hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(NodeTypeName);
             hashCode = hashCode * -1521134295 + ChildIndex.GetHashCode();
             return hashCode;
+        }
+
+        public override string ToString()
+        {
+            return ChildIndex + ":" + NodeTypeName + ":" + Token;
         }
     }
 }

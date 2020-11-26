@@ -507,6 +507,7 @@ namespace VB6ToCSharpCompiler
         {
             var iterationNode = node;
             var s = new List<IndexedPath>();
+            int depth = 0;
             while (iterationNode != null)
             {
                 var index = -1;
@@ -528,8 +529,13 @@ namespace VB6ToCSharpCompiler
                         throw new InvalidOperationException("could not find child node in parent");
                     }
                 }
-                s.Add(new IndexedPath(VbToCsharpPattern.LookupNodeType(iterationNode), index));
+                s.Add(new IndexedPath(VbToCsharpPattern.LookupNodeType(iterationNode), index, iterationNode.getText()));
                 iterationNode = iterationNode.getParent();
+                depth++;
+                if (depth > 100)
+                {
+                    throw new InvalidOperationException("depth too big");
+                }
             }
             s.Reverse();
             return s;

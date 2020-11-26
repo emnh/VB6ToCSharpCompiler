@@ -42,7 +42,12 @@ namespace VB6ToCSharpCompiler
         public string VbCode { get; set; }
         private readonly string csharpString;
 
+        // private List<IndexedPath>[] VbPaths;
         private List<IndexedPath>[] VbPaths;
+        public List<IndexedPath>[] GetVBPaths()
+        {
+            return VbPaths;
+        }
 
         private int cutDepthOfContent = -1;
         private int finalCutDepthOfContent = -1;
@@ -80,6 +85,86 @@ namespace VB6ToCSharpCompiler
             }
 
             return "CUTPATH: " + PrintPath(cutPath);
+        }
+        public static List<IndexedPath> GetExtendedPathList(VB6NodeTree nodeTree, ParseTree node)
+        {
+            var iterationNode = node;
+            var s = new List<IndexedPath>();
+            int depth = 0;
+            while (iterationNode != null)
+            {
+                var index = -1;
+                if (iterationNode.getParent() != null)
+                {
+                    var i = 0;
+                    foreach (var child in nodeTree.GetChildren(iterationNode.getParent()))
+                    {
+                        if (child == iterationNode)
+                        {
+                            index = i;
+                            break;
+                        }
+                        i++;
+                    }
+
+                    if (index == -1)
+                    {
+                        throw new InvalidOperationException("could not find child node in parent");
+                    }
+                }
+                s.Add(new IndexedPath(VbToCsharpPattern.LookupNodeType(iterationNode), index, iterationNode.getText()));
+                iterationNode = iterationNode.getParent();
+                depth++;
+                if (depth > 100)
+                {
+                    throw new InvalidOperationException("depth too big");
+                }
+            }
+            s.Reverse();
+            return s;
+        }
+
+        public static List<IndexedPath>[] GetExtendedPathList(ParseTree pnode)
+        {
+            var paths = new List<List<IndexedPath>>();
+            ParseTree root = null;
+            VB6NodeTree nodeTree = new VB6NodeTree(pnode);
+
+            var visitorCallback = new VisitorCallback()
+            {
+                Callback = (node, parent) =>
+                {
+                    //Console.Error.WriteLine("Node: " + PrintPath(GetExtendedPathList(nodeTree, node)) + ": " + node.getText());
+
+                    if (root == null) root = node;
+
+                    if (nodeTree.GetDepth(node) < 10)
+                    {
+                        var path = GetExtendedPathList(nodeTree, node);
+                        Console.WriteLine("NODE: " + string.Join("/", path));
+                        
+                        paths.Add(path);
+                    }
+                    //var i = 0;
+                    //foreach (var identifier in PatternIdentifiers)
+                    //{
+                    //    if (node.getText().Trim('"') == identifier &&
+                    //        IsInsideSubOrFunction(translator.GetExtendedPathList(node)))
+                    //    {
+                    //        var path = translator.GetExtendedPathList(node);
+                    //        if (paths[i] == null) paths[i] = path;
+                    //    }
+
+                    //    i++;
+                    //}
+                }
+            };
+            
+            var visitor = new VB6ASTTreeViewGeneratorVisitor(visitorCallback);
+            visitor.visit(pnode);
+            //VB6Compiler.Visit(compileResult, visitorCallback);
+
+            return paths.ToArray();
         }
 
         // This method looks up the depth of the $CONTENT identifier.
@@ -436,7 +521,7 @@ namespace VB6ToCSharpCompiler
                     if (i == -1) throw new InvalidOperationException("could not find child node in parent");
                 }
 
-                s.Add(new IndexedPath(LookupNodeType(iterationNode), index));
+                s.Add(new IndexedPath(LookupNodeType(iterationNode), index, iterationNode.GetText().ToString()));
                 iterationNode = iterationNode.Parent;
             }
 
