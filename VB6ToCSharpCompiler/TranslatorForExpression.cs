@@ -133,7 +133,22 @@ namespace VB6ToCSharpCompiler
             }
             else if (asg.getCtx().COLORLITERAL() != null)
             {
-                throw new InvalidOperationException("color literal");
+                var value = asg.getValue();
+                if (int.TryParse(value, out var result))
+                {
+                    return SyntaxFactory.ParseExpression("System.Drawing.Color.FromArgb(" + result + ")");
+                }
+                else if (value.StartsWith("&H"))
+                {
+                    var hexValue = value.Trim('&').Trim('H');
+                    return SyntaxFactory.ParseExpression("(Color)ColorConverter.ConvertFromString(\"" + hexValue + "\")");
+                }
+                else
+                {
+                    throw new System.NotImplementedException("Unknown color literal value type");
+                }
+
+                //throw new InvalidOperationException("color literal");
                 //return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(asg.getCtx().COLORLITERAL().getText()));
             }
             else if (asg.getCtx().TRUE() != null)

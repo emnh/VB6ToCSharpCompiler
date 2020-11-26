@@ -33,11 +33,13 @@ namespace VB6ToCSharpCompiler
     public class Translator
     {
 
+        public const string NamespaceName = "VB6ConvertedApp";
+
         public const string FunctionReturnValueName = "functionReturnValue";
         // TODO: Move
         public const string NewLine = "\r\n";
 
-        private readonly Dictionary<ParseTree, List<ParseTree>> children;
+        private readonly VB6NodeTree _vb6NodeTree;
 
         public io.proleap.vb6.asg.metamodel.Program Program { get;  }
 
@@ -45,29 +47,9 @@ namespace VB6ToCSharpCompiler
         {
             if (compileResult == null) throw new ArgumentNullException(nameof(compileResult));
             this.Program = compileResult.Program;
-            children = new Dictionary<ParseTree, List<ParseTree>>();
-
-            var visitorCallback = new VisitorCallback()
-            {
-                Callback = (node, parent) =>
-                {
-                    // Just make sure all nodes, even leaves, have empty children lists
-                    if (!children.ContainsKey(node))
-                    {
-                        children[node] = new List<ParseTree>();
-                    }
-
-                    // Add this to children of parent
-                    if (!children.ContainsKey(node.getParent()))
-                    {
-                        children[node.getParent()] = new List<ParseTree>();
-                    }
-                    children[node.getParent()].Add(node);
-                }
-            };
-            VB6Compiler.Visit(compileResult, visitorCallback);
+            
+            _vb6NodeTree = new VB6NodeTree(compileResult);
         }
-
 
         public static string TranslateType(string vbType)
         {
@@ -431,8 +413,8 @@ namespace VB6ToCSharpCompiler
             var subStmt = element.subStmt();
             var funStmt = element.functionStmt();
 
-            SyntaxToken identifier = SyntaxFactory.Identifier("uknownMethodName");
-            TypeSyntax returnType = null;
+            SyntaxToken identifier;
+            TypeSyntax returnType;
             if (subStmt != null)
             {
                 var asg = (SubImpl) program.getASGElementRegistry().getASGElement(subStmt);
@@ -517,23 +499,8 @@ namespace VB6ToCSharpCompiler
             {
                 throw new ArgumentNullException(nameof(node));
             }
-            if (children.ContainsKey(node))
-            {
-                return children[node];
-            }
 
-            throw new InvalidOperationException("No such node. Maybe wrong translator object for node?");
-            /*
-            int c = node.getChildCount();
-            for (int i = 0; i < c; i++)
-            {
-                // TODO: does getChild lookup all descendants? if so optimize.. XXX
-                var child = node.getChild(i);
-                if (child.getParent() == node)
-                {
-                    yield return child;
-                }
-            }*/
+            return _vb6NodeTree.GetChildren(node);
         }
 
         public List<IndexedPath> GetExtendedPathList(ParseTree node)
@@ -663,7 +630,6 @@ namespace VB6ToCSharpCompiler
 
         public CompilationUnitSyntax Translate(ModuleImpl module)
         {
-
             if (module == null)
             {
                 throw new ArgumentNullException(nameof(module));
@@ -671,8 +637,17 @@ namespace VB6ToCSharpCompiler
 
             var ctx = module.getCtx();
             var body = ctx.moduleBody();
-
             var methods = GetMethods(body);
+            return Translate(module, methods);
+        }
+
+        public static CompilationUnitSyntax Translate(ModuleImpl module, List<MethodDeclarationSyntax> methods)
+        {
+
+            if (module == null)
+            {
+                throw new ArgumentNullException(nameof(module));
+            }
 
             var classMembers = SyntaxFactory.List<MemberDeclarationSyntax>(methods);
 
@@ -726,8 +701,7 @@ namespace VB6ToCSharpCompiler
                 classes
             ));
 
-            var nsName = "VB6ConvertedApp";
-            var csharpNamespace = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(nsName), nsExterns,
+            var csharpNamespace = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(NamespaceName), nsExterns,
                 nsUsings,
                 nsMembers);
 

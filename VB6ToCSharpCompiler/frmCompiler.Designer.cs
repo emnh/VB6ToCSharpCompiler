@@ -84,12 +84,13 @@
             // 
             // btnTest
             // 
+            this.btnTest.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(7)))), ((int)(((byte)(208)))));
             this.btnTest.Location = new System.Drawing.Point(277, 609);
             this.btnTest.Name = "btnTest";
             this.btnTest.Size = new System.Drawing.Size(128, 55);
             this.btnTest.TabIndex = 11;
             this.btnTest.Text = "Test";
-            this.btnTest.UseVisualStyleBackColor = true;
+            this.btnTest.UseVisualStyleBackColor = false;
             this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
             // 
             // frmCompiler

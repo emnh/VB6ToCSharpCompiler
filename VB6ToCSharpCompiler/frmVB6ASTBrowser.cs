@@ -33,7 +33,7 @@ namespace VB6ToCSharpCompiler
 
         private void frmVB6ASTBrowser_Load(object sender, EventArgs e)
         {
-            var compileResult = VB6Compiler.Compile(FileName);
+            var compileResult = VB6Compiler.Compile(FileName, null, false);
 
             nodeMap = new Dictionary<ParseTree, TreeNode>();
             

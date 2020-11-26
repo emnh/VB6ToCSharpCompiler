@@ -20,6 +20,7 @@
     <Deterministic>true</Deterministic>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -182,6 +183,8 @@
     <Compile Include="CustomCSharpSyntaxWalker.cs" />
     <Compile Include="IndexedPath.cs" />
     <Compile Include="JavaUtil.cs" />
+    <Compile Include="TranslatorForForm.cs" />
+    <Compile Include="VB6NodeTree.cs" />
     <Compile Include="VbToCsharpPattern.cs" />
     <Compile Include="PatternText.cs" />
     <Compile Include="TokenInfo.cs" />

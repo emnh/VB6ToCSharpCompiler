@@ -78,7 +78,7 @@ namespace VB6ToCSharpCompiler
 
         public static CompileResult Compile(string fileName, string data = null, bool translate = true)
         {
-            CompileResult returnValue = new CompileResult();
+            CompileResult compileResult = new CompileResult();
 
             if (fileName == null)
             {
@@ -105,8 +105,8 @@ namespace VB6ToCSharpCompiler
                 code = "Attribute VB_Name" + splitted[1];
             }*/
 
-            returnValue.VBCode = code;
-            returnValue.FileName = fileName;
+            compileResult.VBCode = code;
+            compileResult.FileName = fileName;
 
             // Workaround a bug in the ProLeap parser with regard to multiple files closed on same line
             code =
@@ -129,7 +129,7 @@ namespace VB6ToCSharpCompiler
                 new io.proleap.vb6.asg.runner.impl.VbParserRunnerImpl().analyzeCode(code, fileName,
                     parserImpl);
 
-            returnValue.Program = program;
+            compileResult.Program = program;
 
 
             var modules = program.getModules();
@@ -139,19 +139,22 @@ namespace VB6ToCSharpCompiler
                 var module = (ModuleImpl)modules.get(i);
                 var ctx = module.getCtx();
                 var modName = module.getName();
-                returnValue.ModuleNames.Add(modName);
+                compileResult.ModuleNames.Add(modName);
                 // TODO: use Trivia Syntax Elements?
-                returnValue.CSharpCode += "// Module Name: " + modName + "\r\n";
+                compileResult.CSharpCode += "// Module Name: " + modName + "\r\n";
                 if (translate)
                 {
-                    var syntaxTree = new Translator(returnValue).Translate(module);
-                    returnValue.CSharpCode += syntaxTree.ToFullString() + "\r\n";
+                    var formTree = new TranslatorForForm(compileResult);
+                    compileResult.CSharpCode += formTree.Translate().ToFullString() + "\r\n";
+
+                    var syntaxTree = new Translator(compileResult).Translate(module);
+                    compileResult.CSharpCode += syntaxTree.ToFullString() + "\r\n";
                 }
                 //syntaxTree.
                 //visitor.visit(((ModuleImpl)modules.get(i)).getCtx());
             }
 
-            return returnValue;
+            return compileResult;
         }
     }
 
