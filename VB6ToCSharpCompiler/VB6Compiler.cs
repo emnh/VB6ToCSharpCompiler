@@ -20,8 +20,10 @@ namespace VB6ToCSharpCompiler
 {
     public static class VB6Compiler
     {
+        public static string Folder = ".";
+
         public static string[] GetFiles() {
-            return Directory. GetFiles("SLPC2");
+            return Directory. GetFiles(Folder);
         }
 
         public static void Visit(CompileResult compileResult, VisitorCallback callback)

@@ -35,38 +35,44 @@
             this.btnConvert = new System.Windows.Forms.Button();
             this.btnBrowseVB6AST = new System.Windows.Forms.Button();
             this.btnTest = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lstFileNames
             // 
             this.lstFileNames.FormattingEnabled = true;
-            this.lstFileNames.Location = new System.Drawing.Point(6, 12);
+            this.lstFileNames.ItemHeight = 16;
+            this.lstFileNames.Location = new System.Drawing.Point(8, 15);
+            this.lstFileNames.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.lstFileNames.Name = "lstFileNames";
-            this.lstFileNames.Size = new System.Drawing.Size(265, 589);
+            this.lstFileNames.Size = new System.Drawing.Size(352, 724);
             this.lstFileNames.TabIndex = 9;
             this.lstFileNames.SelectedIndexChanged += new System.EventHandler(this.lstFileNames_SelectedIndexChanged);
             // 
             // txtCSharpCode
             // 
-            this.txtCSharpCode.Location = new System.Drawing.Point(791, 12);
+            this.txtCSharpCode.Location = new System.Drawing.Point(1055, 15);
+            this.txtCSharpCode.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.txtCSharpCode.Multiline = true;
             this.txtCSharpCode.Name = "txtCSharpCode";
-            this.txtCSharpCode.Size = new System.Drawing.Size(501, 590);
+            this.txtCSharpCode.Size = new System.Drawing.Size(667, 725);
             this.txtCSharpCode.TabIndex = 8;
             // 
             // txtVBCode
             // 
-            this.txtVBCode.Location = new System.Drawing.Point(277, 12);
+            this.txtVBCode.Location = new System.Drawing.Point(369, 15);
+            this.txtVBCode.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.txtVBCode.Multiline = true;
             this.txtVBCode.Name = "txtVBCode";
-            this.txtVBCode.Size = new System.Drawing.Size(508, 590);
+            this.txtVBCode.Size = new System.Drawing.Size(676, 725);
             this.txtVBCode.TabIndex = 7;
             // 
             // btnConvert
             // 
-            this.btnConvert.Location = new System.Drawing.Point(6, 608);
+            this.btnConvert.Location = new System.Drawing.Point(189, 747);
+            this.btnConvert.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnConvert.Name = "btnConvert";
-            this.btnConvert.Size = new System.Drawing.Size(128, 56);
+            this.btnConvert.Size = new System.Drawing.Size(171, 69);
             this.btnConvert.TabIndex = 6;
             this.btnConvert.Text = "Convert";
             this.btnConvert.UseVisualStyleBackColor = true;
@@ -74,9 +80,10 @@
             // 
             // btnBrowseVB6AST
             // 
-            this.btnBrowseVB6AST.Location = new System.Drawing.Point(141, 608);
+            this.btnBrowseVB6AST.Location = new System.Drawing.Point(369, 747);
+            this.btnBrowseVB6AST.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnBrowseVB6AST.Name = "btnBrowseVB6AST";
-            this.btnBrowseVB6AST.Size = new System.Drawing.Size(130, 56);
+            this.btnBrowseVB6AST.Size = new System.Drawing.Size(173, 69);
             this.btnBrowseVB6AST.TabIndex = 10;
             this.btnBrowseVB6AST.Text = "Browse VB6 AST";
             this.btnBrowseVB6AST.UseVisualStyleBackColor = true;
@@ -85,25 +92,38 @@
             // btnTest
             // 
             this.btnTest.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(7)))), ((int)(((byte)(208)))));
-            this.btnTest.Location = new System.Drawing.Point(277, 609);
+            this.btnTest.Location = new System.Drawing.Point(550, 749);
+            this.btnTest.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnTest.Name = "btnTest";
-            this.btnTest.Size = new System.Drawing.Size(128, 55);
+            this.btnTest.Size = new System.Drawing.Size(171, 68);
             this.btnTest.TabIndex = 11;
             this.btnTest.Text = "Test";
             this.btnTest.UseVisualStyleBackColor = false;
             this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(13, 747);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(165, 70);
+            this.button1.TabIndex = 12;
+            this.button1.Text = "Open Folder";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // frmCompiler
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1314, 907);
+            this.ClientSize = new System.Drawing.Size(1752, 1116);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.btnTest);
             this.Controls.Add(this.btnBrowseVB6AST);
             this.Controls.Add(this.lstFileNames);
             this.Controls.Add(this.txtCSharpCode);
             this.Controls.Add(this.txtVBCode);
             this.Controls.Add(this.btnConvert);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "frmCompiler";
             this.Text = "VB6 to CSharp Compiler";
             this.Load += new System.EventHandler(this.frmCompiler_Load);
@@ -120,6 +140,7 @@
         private System.Windows.Forms.Button btnConvert;
         private System.Windows.Forms.Button btnBrowseVB6AST;
         private System.Windows.Forms.Button btnTest;
+        private System.Windows.Forms.Button button1;
     }
 }
 
