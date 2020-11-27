@@ -1,5 +1,7 @@
 # VB6ToCSharpCompiler
 
+Copyright (C) 2020 Eivind Magnus Hvidevold / Hvidevold Development ENK
+
 A VB6 to C# compiler using:
  - ProLeap VB6 ANTLR Parser in Java (licensed under MIT License)
  - IKVM.net to use ProLeap parser from C# (parts of it "Copyright (C) 2002-2014 Jeroen Frijters"), parts of it licensed under GPLv2 license)
