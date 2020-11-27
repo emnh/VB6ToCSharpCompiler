@@ -8,7 +8,7 @@ using CommandLine;
 
 namespace VB6ToCSharpCompiler
 {
-    public class Program
+    class Program
     {
         public class Options
         {
@@ -39,6 +39,10 @@ namespace VB6ToCSharpCompiler
 
         static void Main(string[] args)
         {
+            
+
+            Console.Error.WriteLine("Hello World!");
+
             TranslatorForPattern.IntializeTranslatorForPattern();
 
             Parser.Default.ParseArguments<Options>(args)
@@ -53,7 +57,13 @@ namespace VB6ToCSharpCompiler
 
                        if (o.Compile)
                        {
-                           //using (new OutputSink())
+                           //DebugClass.LogStandard("")
+                           DebugClass.LogStandard("Compile");
+                           if (o.Files == null)
+                           {
+                               DebugClass.LogStandard("No files specified!");
+                           }
+                           else
                            {
                                Compile(o.Files);
                            }
@@ -69,6 +79,8 @@ namespace VB6ToCSharpCompiler
                            frm.Dispose();
                        }
                    });
+
+            
         }
     }    
 }
