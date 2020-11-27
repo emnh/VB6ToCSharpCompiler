@@ -53,7 +53,7 @@ namespace VB6ToCSharpCompiler
             return returnedList;
         }
 
-        public string ToString() {
+        public override string ToString() {
             return "(" + setpos + ", " + depth + ", " + childIndex + ", " + typeName + ", " + token + ")";
         }
 

@@ -42,12 +42,15 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject />
+    <StartupObject>VB6ToCSharpCompiler.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="App, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\ProLeapParserDLL\App.dll</HintPath>
+    </Reference>
+    <Reference Include="CommandLine, Version=2.8.0.0, Culture=neutral, PublicKeyToken=5a870481e358d379, processorArchitecture=MSIL">
+      <HintPath>..\packages\CommandLineParser.2.8.0\lib\net461\CommandLine.dll</HintPath>
     </Reference>
     <Reference Include="IKVM.AWT.WinForms, Version=8.1.5717.0, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
       <HintPath>..\packages\IKVM.8.1.5717.0\lib\IKVM.AWT.WinForms.dll</HintPath>
@@ -185,6 +188,7 @@
     <Compile Include="ASTSequenceItem.cs" />
     <Compile Include="CsharpVisitorCallback.cs" />
     <Compile Include="CustomCSharpSyntaxWalker.cs" />
+    <Compile Include="DebugClass.cs" />
     <Compile Include="IndexedPath.cs" />
     <Compile Include="JavaUtil.cs" />
     <Compile Include="TranslatorForForm.cs" />

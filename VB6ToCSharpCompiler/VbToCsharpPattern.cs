@@ -13,7 +13,10 @@ using com.sun.tools.corba.se.idl;
 using ikvm.extensions;
 using io.proleap.vb6.asg.metamodel;
 using org.antlr.v4.runtime.tree;
+using Microsoft.CodeAnalysis;
 using SyntaxTree = org.antlr.v4.runtime.tree.SyntaxTree;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace VB6ToCSharpCompiler
 {

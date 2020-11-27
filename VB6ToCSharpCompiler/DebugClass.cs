@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace VB6ToCSharpCompiler
 {
-    public class DebugClass
+    public static class DebugClass
     {
         public static bool Enabled = false;
         public static TextWriter console;
