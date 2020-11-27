@@ -36,7 +36,10 @@ namespace VB6ToCSharpCompiler
             lstFileNames.Items.Clear();
             foreach (var fileName in VB6Compiler.GetFiles())
             {
-                if (fileName.EndsWith(".bas") || fileName.EndsWith(".frm") || fileName.EndsWith(".frx"))
+                if (
+                    fileName.EndsWith(".bas", System.StringComparison.InvariantCulture) ||
+                    fileName.EndsWith(".frm", System.StringComparison.InvariantCulture) ||
+                    fileName.EndsWith(".frx", System.StringComparison.InvariantCulture))
                 {
                     lstFileNames.Items.Add(fileName);
                 }

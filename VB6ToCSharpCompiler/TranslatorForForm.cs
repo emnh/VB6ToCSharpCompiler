@@ -237,8 +237,8 @@ namespace VB6ToCSharpCompiler
 
             if (!seenProperties.ContainsKey(propertyName))
             {
-                Console.Error.WriteLine("// Control: " + ctrlType);
-                Console.Error.WriteLine("{{\"{0}\", \"{0}\"}},", propertyName);
+                DebugClass.LogError("// Control: " + ctrlType);
+                DebugClass.LogError(String.Format("{{\"{0}\", \"{0}\"}},", propertyName));
                 seenProperties[propertyName] = true;
             }
             
@@ -271,7 +271,7 @@ namespace VB6ToCSharpCompiler
 
             if (asg == null)
             {
-                Console.Error.WriteLine("ASG missing for: " + ctrlIdentifier + " for property: " + propertyName);
+                DebugClass.LogError("ASG missing for: " + ctrlIdentifier + " for property: " + propertyName);
                 throw new System.NotImplementedException("Don't know how to handle ASG null.");
             }
 
@@ -370,7 +370,7 @@ namespace VB6ToCSharpCompiler
                     {
                         foreach (var grandchild in vb6NodeTree.GetChildren(child))
                         {
-                            Console.Error.WriteLine("GRANDCHILD: " + grandchild.GetType().Name + " " + grandchild.getText());
+                            DebugClass.LogError("GRANDCHILD: " + grandchild.GetType().Name + " " + grandchild.getText());
                         }
                         throw new System.NotImplementedException("Property not handled for: " + ctrlIdentifier);
                     }

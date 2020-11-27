@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ namespace VB6ToCSharpCompiler
 
         private readonly Dictionary<ParseTree, List<ParseTree>> children;
         private readonly Dictionary<ParseTree, int> depths;
+        private readonly Dictionary<ParseTree, ImmutableList<IndexedPath>> paths;
 
         public VB6NodeTree(CompileResult compileResult)
         {
@@ -42,6 +44,7 @@ namespace VB6ToCSharpCompiler
         {
             children = new Dictionary<ParseTree, List<ParseTree>>();
             depths = new Dictionary<ParseTree, int>();
+            paths = new Dictionary<ParseTree, ImmutableList<IndexedPath>>();
 
             var visitorCallback = new VisitorCallback()
             {
@@ -73,6 +76,25 @@ namespace VB6ToCSharpCompiler
                         depths[node.getParent()] = 0;
                     }
                     depths[node] = depths[node.getParent()] + 1;
+
+                    // Path updating
+                    if (!paths.ContainsKey(node))
+                    {
+                        paths[node] = ImmutableList.Create<IndexedPath>();
+                    }
+
+                    // Add this to children of parent
+                    if (!paths.ContainsKey(node.getParent()))
+                    {
+                        paths[node.getParent()] = ImmutableList.Create<IndexedPath>();
+                    }
+                    int childIndex = children[node.getParent()].Count;
+                    string token = new String(node.getText().Take(50).ToArray());
+                    if (token.Length >= 50)
+                    {
+                        token += "...";
+                    }
+                    paths[node] = paths[node.getParent()].Add(new IndexedPath(VbToCsharpPattern.LookupNodeType(node), childIndex, token));
                 }
             };
 
@@ -83,6 +105,16 @@ namespace VB6ToCSharpCompiler
         public ParseTree GetRoot()
         {
             return children.Keys.First();
+        }
+
+        public ImmutableList<IndexedPath> GetPath(ParseTree node)
+        {
+            if (paths.ContainsKey(node))
+            {
+                return paths[node];
+            }
+
+            throw new InvalidOperationException("No such node.");
         }
 
         public int GetDepth(ParseTree node)

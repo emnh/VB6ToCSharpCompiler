@@ -47,7 +47,7 @@ namespace VB6ToCSharpCompiler
 
         public ExpressionSyntax GetFirstGoodChild(string forwardType, ParseTree tree)
         {
-            Console.Error.WriteLine("GetFirstGoodChild: " + forwardType);
+            DebugClass.LogError("GetFirstGoodChild: " + forwardType);
             var list = GetGoodChildren(tree);
             if (list.Count > 1)
             {
@@ -238,7 +238,7 @@ namespace VB6ToCSharpCompiler
             var goodChildren = GetGoodChildren(tree);
             if (goodChildren.Count == 1)
             {
-                Console.Error.WriteLine("FORWARDED: " + VbToCsharpPattern.LookupNodeType(tree) + ": " + tree.getText());
+                DebugClass.LogError("FORWARDED: " + VbToCsharpPattern.LookupNodeType(tree) + ": " + tree.getText());
                 return goodChildren[0];
             }
 
@@ -252,7 +252,7 @@ namespace VB6ToCSharpCompiler
 
                     if (methodParameters.Length > 0 && asg != null && methodParameters[0].ParameterType == asg.GetType())
                     {
-                        Console.Error.WriteLine("OBSOLETE: Invoking specific GetExpression on: " + tree.getText());
+                        DebugClass.LogError("OBSOLETE: Invoking specific GetExpression on: " + tree.getText());
                         //statements.Add(SyntaxFactory.EmptyStatement().WithLeadingTrivia(SyntaxFactory.Comment("// Invoking GetExpression: " + asg.GetType().Name + ":" + asg.getCtx().depth())));
                         return (ExpressionSyntax)method.Invoke(this, new object[] { asg });
                     }
@@ -289,16 +289,16 @@ namespace VB6ToCSharpCompiler
             } else if (tree is VisualBasic6Parser.TypeHintContext)
             {
                 // Ignore type hint context
-                Console.Error.WriteLine("IGNORING TYPE HINT CONTEXT");
+                DebugClass.LogError("IGNORING TYPE HINT CONTEXT");
                 return null;
             }
 
             var explanation = "// " + VbToCsharpPattern.LookupNodeType(tree) + " not in [" + TranslatorForPattern.DocPatterns() + "]" + Translator.NewLine;
-            Console.Error.WriteLine(nameof(GetExpression) + ": " + VbToCsharpPattern.LookupNodeType(tree) + ": " + tree.getText());
-            Console.Error.WriteLine(explanation);
+            DebugClass.LogError(nameof(GetExpression) + ": " + VbToCsharpPattern.LookupNodeType(tree) + ": " + tree.getText());
+            DebugClass.LogError(explanation);
             if (asg != null)
             {
-                Console.Error.WriteLine(nameof(GetExpression) + ": " + asg.GetType().Name);
+                DebugClass.LogError(nameof(GetExpression) + ": " + asg.GetType().Name);
             }
             // TODO: Reenable.
             throw new InvalidOperationException("Expression returned null");

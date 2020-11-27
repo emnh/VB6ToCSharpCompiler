@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -10,14 +11,7 @@ using com.ibm.icu.text;
 using com.sun.org.apache.xpath.@internal.compiler;
 using com.sun.tools.corba.se.idl;
 using ikvm.extensions;
-using io.proleap.vb6;
 using io.proleap.vb6.asg.metamodel;
-using io.proleap.vb6.asg.metamodel.statement.print;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Operations;
 using org.antlr.v4.runtime.tree;
 using SyntaxTree = org.antlr.v4.runtime.tree.SyntaxTree;
 
@@ -65,13 +59,13 @@ namespace VB6ToCSharpCompiler
 
             VbParsePattern(vbCode);
             //CsharpParsedPattern = CSharpParsePattern(csharpString);
-            Console.Error.WriteLine("ASGType: " + VbTreeNodeType);
-            foreach (var path in VbPaths) Console.Error.WriteLine("Path: " + PrintPath(path));
+            DebugClass.LogError("ASGType: " + VbTreeNodeType);
+            foreach (var path in VbPaths) DebugClass.LogError("Path: " + PrintPath(path));
 
             /*
             foreach (var path in CSharpPaths)
             {
-                Console.Error.WriteLine("Path: " + PrintPath(path));
+                DebugClass.Log("Path: " + PrintPath(path));
             }
             */
         }
@@ -124,9 +118,9 @@ namespace VB6ToCSharpCompiler
             return s;
         }
 
-        public static List<IndexedPath>[] GetExtendedPathList(ParseTree pnode)
+        public static List<ImmutableList<IndexedPath>> GetExtendedPathList(ParseTree pnode)
         {
-            var paths = new List<List<IndexedPath>>();
+            var paths = new List<ImmutableList<IndexedPath>>();
             ParseTree root = null;
             VB6NodeTree nodeTree = new VB6NodeTree(pnode);
 
@@ -134,17 +128,19 @@ namespace VB6ToCSharpCompiler
             {
                 Callback = (node, parent) =>
                 {
-                    //Console.Error.WriteLine("Node: " + PrintPath(GetExtendedPathList(nodeTree, node)) + ": " + node.getText());
+                    //DebugClass.Log("Node: " + PrintPath(GetExtendedPathList(nodeTree, node)) + ": " + node.getText());
 
                     if (root == null) root = node;
 
-                    if (nodeTree.GetDepth(node) < 10)
-                    {
-                        var path = GetExtendedPathList(nodeTree, node);
-                        Console.WriteLine("NODE: " + string.Join("/", path));
+                    paths.Add(nodeTree.GetPath(node));
+                    //if (nodeTree.GetDepth(node) < 10)
+                    //{
+                    //    var path = GetExtendedPathList(nodeTree, node);
+                    //    Console.WriteLine("NODE: " + string.Join("/", path));
                         
-                        paths.Add(path);
-                    }
+                    //    paths.Add(path);
+                    //}
+
                     //var i = 0;
                     //foreach (var identifier in PatternIdentifiers)
                     //{
@@ -164,7 +160,7 @@ namespace VB6ToCSharpCompiler
             visitor.visit(pnode);
             //VB6Compiler.Visit(compileResult, visitorCallback);
 
-            return paths.ToArray();
+            return paths;
         }
 
         // This method looks up the depth of the $CONTENT identifier.
@@ -175,7 +171,7 @@ namespace VB6ToCSharpCompiler
         {
             var wrapperCompileResult = VB6Compiler.Compile("Test.bas", vbWrapperCode, false);
             var translator = new Translator(wrapperCompileResult);
-            Console.Error.WriteLine("SetCutDepthAndCutPath: " + vbWrapperCode);
+            DebugClass.LogError("SetCutDepthAndCutPath: " + vbWrapperCode);
 
             var visitorCallback = new VisitorCallback()
             {
@@ -186,7 +182,7 @@ namespace VB6ToCSharpCompiler
                     //if (identifier == Content)
                     var path = translator.GetExtendedPathList(node);
 
-                    Console.Error.WriteLine("SetCutDepthAndCutPath: " + VbCode + ": " + PrintPath(path));
+                    DebugClass.LogError("SetCutDepthAndCutPath: " + VbCode + ": " + PrintPath(path));
 
                     if (identifier == Content)
                     {
@@ -194,13 +190,13 @@ namespace VB6ToCSharpCompiler
                         if (path[path.Count - 1].NodeTypeName == "VsICSContext")
                         {
                             cutDepthOfContent = path.Count - 1;
-                            Console.Error.WriteLine("SetCutDepth: MATCH");
+                            DebugClass.LogError("SetCutDepth: MATCH");
                         }
                         // Bounded
                         if (!PathContains(path, "VsICSContext"))
                         {
                             cutDepthOfContent = path.Count;
-                            Console.Error.WriteLine("SetCutDepth: BOUND MATCH");
+                            DebugClass.LogError("SetCutDepth: BOUND MATCH");
                         }
                         cutPath = path.Take(cutDepthOfContent).ToList();
                     }
@@ -257,7 +253,7 @@ namespace VB6ToCSharpCompiler
 
                     
 
-                    //Console.Error.WriteLine("GetIdentifier: " + identifier);
+                    //DebugClass.Log("GetIdentifier: " + identifier);
                     var path = translator.GetExtendedPathList(node);
                     if (IsInsideSubOrFunction(path))
                     {
@@ -284,7 +280,7 @@ namespace VB6ToCSharpCompiler
                             {
                                 tokenPath = tokenPath ?? path;
                                 tokensPerNode.Add(new TokenInfo(path, tokens.Select(x => x.Item2).ToList()));
-                                Console.Error.WriteLine("TOKENS" + string.Join("@", tokens));
+                                DebugClass.LogError("TOKENS" + string.Join("@", tokens));
                             }
                             
                         }
@@ -367,7 +363,7 @@ namespace VB6ToCSharpCompiler
                 var children = translator.GetChildren(node);
                 if (!(indexedPath.ChildIndex >= 0 && indexedPath.ChildIndex < children.Count))
                 {
-                    Console.Error.WriteLine("Did not find child: " + PrintPath(path) + " in " + root.getText());
+                    DebugClass.LogError("Did not find child: " + PrintPath(path) + " in " + root.getText());
                     if (justCheck) return null;
                     throw new InvalidOperationException("child outside bounds");
                 }
@@ -407,13 +403,13 @@ namespace VB6ToCSharpCompiler
             var paths = new List<IndexedPath>[PatternIdentifiers.Length];
             ParseTree root = null;
 
-            Console.Error.WriteLine("PATTERN: " + VbCode);
+            DebugClass.LogError("PATTERN: " + VbCode);
 
             var visitorCallback = new VisitorCallback()
             {
                 Callback = (node, parent) =>
                 {
-                    Console.Error.WriteLine("Node: " + PrintPath(translator.GetExtendedPathList(node)) + ": " + node.getText());
+                    DebugClass.LogError("Node: " + PrintPath(translator.GetExtendedPathList(node)) + ": " + node.getText());
 
                     if (root == null) root = node;
 
@@ -439,19 +435,19 @@ namespace VB6ToCSharpCompiler
             var comparePath = paths.Length > 0 ? paths[0] : tokenPath;
             if (comparePath == null)
             {
-                Console.Error.WriteLine("VB Code: " + VbCode);
+                DebugClass.LogError("VB Code: " + VbCode);
                 throw new InvalidOperationException(nameof(comparePath) + " is null");
             }
             int commonDepth = Math.Min(cutPath.Count, comparePath.Count);
 
             for (int i = 0; i < commonDepth; i++)
             {
-                Console.Error.WriteLine("COMPARE PATHS: " + PrintPath(cutPath));
+                DebugClass.LogError("COMPARE PATHS: " + PrintPath(cutPath));
                 foreach (var path in paths)
                 {
-                    Console.Error.WriteLine("COMPARE PATHS: " + PrintPath(path));
+                    DebugClass.LogError("COMPARE PATHS: " + PrintPath(path));
                 }
-                Console.Error.WriteLine("");
+                DebugClass.LogError("");
                 if (cutPath[i].NodeTypeName != comparePath[i].NodeTypeName)
                 {
                     break;
@@ -464,7 +460,7 @@ namespace VB6ToCSharpCompiler
 
             if (lowestCommonDepth >= comparePath.Count)
             {
-                Console.Error.WriteLine("VB Code: " + VbCode + ", Identifier: " + PatternIdentifiers[0]);
+                DebugClass.LogError("VB Code: " + VbCode + ", Identifier: " + PatternIdentifiers[0]);
             }
             VbTreeNodeType = comparePath[lowestCommonDepth].NodeTypeName;
             
@@ -545,7 +541,8 @@ namespace VB6ToCSharpCompiler
         {
             if (translator == null) throw new ArgumentNullException(nameof(translator));
             if (tree == null) throw new ArgumentNullException(nameof(tree));
-            if (tree == null) throw new ArgumentNullException(nameof(tree));
+            if (VbPaths == null) throw new ArgumentNullException(nameof(VbPaths));
+
             var canTranslate = true;
             foreach (var path in VbPaths)
             {
@@ -575,7 +572,7 @@ namespace VB6ToCSharpCompiler
             /*
             var testPattern = ".*" + string.Join(".*", PatternTokens) + ".*";
             var rex = Regex.IsMatch(tree.getText(), testPattern);
-            Console.Error.WriteLine("TOKENMATCHING: " + tree.getText() + " against " + testPattern + " match? " + rex);
+            DebugClass.Log("TOKENMATCHING: " + tree.getText() + " against " + testPattern + " match? " + rex);
             return rex;
             */
             bool returnValue = true;
@@ -590,7 +587,7 @@ namespace VB6ToCSharpCompiler
                 var node = LookupNodeFromPath(translator, tree, tokenCutPath, justCheck);
                 if (node == null)
                 {
-                    Console.Error.WriteLine("UNMATCHED TOKENS 1: " + VbTreeNodeType + ":" + PrintPath(tokenCutPath) + ":" + PrintPath(tokenInfo.Path));
+                    DebugClass.LogError("UNMATCHED TOKENS 1: " + VbTreeNodeType + ":" + PrintPath(tokenCutPath) + ":" + PrintPath(tokenInfo.Path));
                     returnValue = false;
                     break;
                 }
@@ -598,10 +595,10 @@ namespace VB6ToCSharpCompiler
                 var tokenStrings = tokens.Select(x => x.Item2).ToList();
                 if (!tokenInfo.Tokens.SequenceEqual(tokenStrings))
                 {
-                    Console.Error.WriteLine("UNMATCHED TOKENS 2: " + VbTreeNodeType + ":" + PrintPath(tokenCutPath) + ":" + PrintPath(tokenInfo.Path));
-                    Console.Error.WriteLine("PATH LENGTH COMPARISON: " + finalCutDepthOfContent + ":" + tokenInfo.Path.Count);
-                    Console.Error.WriteLine(string.Join("@", tokenInfo.Tokens));
-                    Console.Error.WriteLine(string.Join("@", tokenStrings));
+                    DebugClass.LogError("UNMATCHED TOKENS 2: " + VbTreeNodeType + ":" + PrintPath(tokenCutPath) + ":" + PrintPath(tokenInfo.Path));
+                    DebugClass.LogError("PATH LENGTH COMPARISON: " + finalCutDepthOfContent + ":" + tokenInfo.Path.Count);
+                    DebugClass.LogError(string.Join("@", tokenInfo.Tokens));
+                    DebugClass.LogError(string.Join("@", tokenStrings));
                     //return false;
                     returnValue = false;
                 }
@@ -615,7 +612,7 @@ namespace VB6ToCSharpCompiler
 
             var callback = new CsharpVisitorCallback()
             {
-                Callback = node => { Console.Error.WriteLine("Node: " + node.Kind() + ": " + node.ToFullString()); }
+                Callback = node => { DebugClass.LogError("Node: " + node.Kind() + ": " + node.ToFullString()); }
             };
 
             var walker = new CustomCSharpSyntaxWalker(callback);
@@ -647,7 +644,7 @@ namespace VB6ToCSharpCompiler
 
                 var node = LookupNodeFromPath(translator, tree, path);
 
-                Console.Error.WriteLine(
+                DebugClass.LogError(
                     "Extracting Identifier: " + identifier + " with path " +
                     PrintPath(path) + " for code " + tree.getText());
                 var translated = translator.TranslateNode(node);
@@ -656,12 +653,12 @@ namespace VB6ToCSharpCompiler
                 if (translated != null)
                 {
                     DebugDumpCSharpSyntax(translated);
-                    Console.Error.WriteLine("Extracted: " + translated.NormalizeWhitespace().ToFullString());
+                    DebugClass.LogError("Extracted: " + translated.NormalizeWhitespace().ToFullString());
                     replacement = replacement.replace(uid, translated.NormalizeWhitespace().ToFullString());
                 }
                 else
                 {
-                    Console.Error.WriteLine("UNTRANSLATED_ " + LookupNodeType(node)+
+                    DebugClass.LogError("UNTRANSLATED_ " + LookupNodeType(node)+
                                             ", ASG: " + translator.GetAsg<ASGElement>(node)?.GetType()?.Name +
                                             ", Identifier: " + identifier + ", Path: " + PrintPath(path) +
                                             "(" + node.getText().Trim() + ")");

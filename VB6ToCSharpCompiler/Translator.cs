@@ -125,7 +125,7 @@ namespace VB6ToCSharpCompiler
 
                 var typeName = LookupType(asgSub.getType());
 
-                //Console.Error.WriteLine("VAR: " + declName + " " + declTypeName + " " + name + " " + typeName);
+                //DebugClass.Log("VAR: " + declName + " " + declTypeName + " " + name + " " + typeName);
 
                 var variables =
                     SyntaxFactory.SeparatedList<VariableDeclaratorSyntax>(
@@ -180,7 +180,7 @@ namespace VB6ToCSharpCompiler
 
             var typeName = returnType;
 
-            //Console.Error.WriteLine("VAR: " + declName + " " + declTypeName + " " + name + " " + typeName);
+            //DebugClass.Log("VAR: " + declName + " " + declTypeName + " " + name + " " + typeName);
 
             var variables =
                 SyntaxFactory.SeparatedList<VariableDeclaratorSyntax>(
@@ -309,13 +309,13 @@ namespace VB6ToCSharpCompiler
                 }
                 else
                 {
-                    //Console.Error.WriteLine("Translation: " + translation.ToFullString());
+                    //DebugClass.Log("Translation: " + translation.ToFullString());
                     returnValue.Add(SyntaxFactory.ExpressionStatement((ExpressionSyntax) translation));
                 }
             }
             else if (GetChildren(tree).Count == 1)
             {
-                Console.Error.WriteLine("FORWARDING STATEMENT: " + tree.getText());
+                DebugClass.LogError("FORWARDING STATEMENT: " + tree.getText());
                 return GetStatement(GetChildren(tree)[0]);
             }
             else
@@ -387,8 +387,8 @@ namespace VB6ToCSharpCompiler
             foreach (var element in vb6Body.moduleBodyElement().JavaListToCSharpList<VisualBasic6Parser.ModuleBodyElementContext>())
             {
 
-                Console.Error.WriteLine("Element Type: " + element.GetType().Name);
-                Console.Error.WriteLine("Element Type: " + (element.subStmt() != null));
+                DebugClass.LogError("Element Type: " + element.GetType().Name);
+                DebugClass.LogError("Element Type: " + (element.subStmt() != null));
 
                 if (element.subStmt() != null)
                 {
@@ -408,7 +408,7 @@ namespace VB6ToCSharpCompiler
         private MethodDeclarationSyntax GetMethod(io.proleap.vb6.asg.metamodel.Program program, VisualBasic6Parser.ModuleBodyElementContext element,
             SyntaxList<AttributeListSyntax> attributeLists, SyntaxTokenList modifiers)
         {
-            //Console.Error.WriteLine("Element Type: " + element.subStmt().GetType().Name);
+            //DebugClass.Log("Element Type: " + element.subStmt().GetType().Name);
 
             var subStmt = element.subStmt();
             var funStmt = element.functionStmt();
@@ -457,7 +457,7 @@ namespace VB6ToCSharpCompiler
                 // TODO: check if BYREF or BYVAL
                 // TODO: check if arg.toString() gives the correct name
                 var argImpl = (ArgImpl) program.getASGElementRegistry().getASGElement(arg);
-                Console.Error.WriteLine("Parameter Type: " + LookupType(argImpl.getType()));
+                DebugClass.LogError("Parameter Type: " + LookupType(argImpl.getType()));
 
                 var argName = argImpl.getName();
                 var typeName = LookupType(argImpl.getType());
@@ -479,7 +479,7 @@ namespace VB6ToCSharpCompiler
 
             if (block == null)
             {
-                Console.Error.WriteLine("Block is null for: " + element.toStringTree());
+                DebugClass.LogError("Block is null for: " + element.toStringTree());
             }
 
 
@@ -594,9 +594,19 @@ namespace VB6ToCSharpCompiler
                 if (methodParameters.Length == 0)
                 {
                     var methodName = methods[i].Name;
+
+                    if (methodName == "notify" || 
+                        methodName == "notifyAll" ||
+                        methodName == "wait" || 
+                        methodName == "ToString")
+                    {
+                        continue;
+                    }
                     
                     try
                     {
+                        Console.WriteLine("Method Name: {0} ", methodName);
+
                         var ret = method.Invoke(element, Array.Empty<object>());
                         if (ret != null)
                         {
@@ -606,6 +616,7 @@ namespace VB6ToCSharpCompiler
                     catch (Exception e)
                     {
                         Console.WriteLine("Exception : {0} ", e.Message);
+                        throw;
                     }
                 }
 
@@ -624,12 +635,14 @@ namespace VB6ToCSharpCompiler
 
             s += "Node Type Path: " + GetPath(node) + NewLine;
             s += "ASG  Type Path: " + GetPath(asg) + NewLine;
-            s += "     Node Text: " + node.getText() + NewLine;
-            s += "Node Properties: " + GetElementProperties(node) + NewLine;
-            if (asg != null)
-            {
-                s += "ASG Properties: " + GetElementProperties(asg) + NewLine;
-            }
+            s += "     Node Text: " + node.getText().Replace("\n", NewLine) + NewLine;
+
+            // TODO: This is too intensive
+            //s += "Node Properties: " + GetElementProperties(node) + NewLine;
+            //if (asg != null)
+            //{
+            //    s += "ASG Properties: " + GetElementProperties(asg) + NewLine;
+            //}
 
             return s;
         }

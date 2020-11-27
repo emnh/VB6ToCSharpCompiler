@@ -20,7 +20,7 @@ namespace VB6ToCSharpCompiler
 {
     public static class VB6Compiler
     {
-        public static string Folder = ".";
+        public static string Folder = @"F:\VB6Code";
 
         public static string[] GetFiles() {
             return Directory. GetFiles(Folder);
@@ -73,7 +73,7 @@ namespace VB6ToCSharpCompiler
             {
                 join += parts[0].Trim() + " " + part.Trim() + Translator.NewLine;
             }
-            Console.Error.WriteLine("CLOSE: " + m.toString() + ", JOIN: " + join);
+            DebugClass.LogError("CLOSE: " + m.toString() + ", JOIN: " + join);
             return join;
             //return x.ToUpper();
         }
@@ -118,7 +118,7 @@ namespace VB6ToCSharpCompiler
                     MultilineCloseReplacement,
                     RegexOptions.IgnoreCase);
 
-            //Console.Error.WriteLine("CODE: " + code);
+            //DebugClass.Log("CODE: " + code);
 
             code = code.Replace("\r", "");
 

@@ -250,11 +250,11 @@ namespace VB6ToCSharpCompiler
                     pattern = patternText.Compile();
                 } catch (VbParserException e)
                 {
-                    Console.Error.WriteLine("Pattern Compile Failed: " + patternText.LogValue() + ": " + e.toString());
+                    DebugClass.LogError("Pattern Compile Failed: " + patternText.LogValue() + ": " + e.toString());
                     throw;
                 }
 
-                Console.Error.WriteLine(
+                DebugClass.LogError(
                     "Pattern: " + patternText.LogValue() + ", " +
                     nameof(pattern.VbTreeNodeType) + ": " + pattern.VbTreeNodeType);
 
@@ -269,11 +269,11 @@ namespace VB6ToCSharpCompiler
             {
                 foreach (var pat2 in pat.Value)
                 {
-                    Console.Error.WriteLine("PATTERNSTATUS: " + pat2.VbCode + ": " + pat2.VbTreeNodeType + ": " + pat2.GetLogPath());
+                    DebugClass.LogError("PATTERNSTATUS: " + pat2.VbCode + ": " + pat2.VbTreeNodeType + ": " + pat2.GetLogPath());
                     foreach (var tki in pat2.PatternTokens)
                     {
-                        Console.Error.WriteLine("PATTERNTOKENS: " + VbToCsharpPattern.PrintPath(tki.Path));
-                        Console.Error.WriteLine("PATTERNTOKENS: " +
+                        DebugClass.LogError("PATTERNTOKENS: " + VbToCsharpPattern.PrintPath(tki.Path));
+                        DebugClass.LogError("PATTERNTOKENS: " +
                                                 string.Join("@", tki.Tokens));
                     }
                 }
@@ -289,6 +289,15 @@ namespace VB6ToCSharpCompiler
                 throw new ArgumentNullException(nameof(tree));
             }
             var name = VbToCsharpPattern.LookupNodeType(tree);
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+            if (compiledPatterns == null)
+            {
+                throw new ArgumentNullException(nameof(compiledPatterns));
+            }
+
             var canTranslate = compiledPatterns.ContainsKey(name);
             if (canTranslate)
             {
@@ -304,12 +313,12 @@ namespace VB6ToCSharpCompiler
 
                 if (!canTranslate)
                 {
-                    Console.Error.WriteLine("PATTERN NODE: " + name + ", CASE: " + tree.getText());
+                    DebugClass.LogError("PATTERN NODE: " + name + ", CASE: " + tree.getText());
                     foreach (var pattern in compiledPatterns[name])
                     {
                         foreach (var tokens in pattern.PatternTokens)
                         {
-                            Console.Error.WriteLine("TOKENS: " + string.Join("@", tokens.Tokens));
+                            DebugClass.LogError("TOKENS: " + string.Join("@", tokens.Tokens));
                         }
                     }
 
@@ -347,7 +356,7 @@ namespace VB6ToCSharpCompiler
         public static ExpressionSyntax TranslateExpression(Translator translator, ParseTree tree)
         {
             var result = Translate(translator, tree);
-            Console.Error.WriteLine("Result: " + result);
+            DebugClass.LogError("Result: " + result);
             if (result is ExpressionSyntax es)
             {
                 return es;
