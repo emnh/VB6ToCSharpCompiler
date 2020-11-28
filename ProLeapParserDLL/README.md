@@ -24,8 +24,8 @@ mkdir libs
 cp $(cat cp.txt | sed 's@:@ @g') libs/
 
 # Generate DLL (expect lots of warnings)
-#./ikvm/ikvmc.exe -target:library libs/* target/proleap-vb6-parser-2.3.0.jar -out:App.dll
-./ikvm-7.2.4630.5/bin/ikvmc.exe -target:library libs/* target/proleap-vb6-parser-2.3.0.jar -out:App.dll
+#./ikvm-7.2.4630.5/bin/ikvmc.exe -target:library libs/* target/proleap-vb6-parser-2.3.0.jar -out:App.dll
+./ikvm8/ikvmc.exe -target:library libs/* target/proleap-vb6-parser-2.3.0.jar -out:App.dll
 
 # Copy
 cp App.dll $TARGET/ProLeapParserDLL/App.dll
