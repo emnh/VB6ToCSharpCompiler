@@ -6,25 +6,28 @@ cd proleap-vb6-parser
 mvn clean package
 
 # Download IKVM
-wget https://netix.dl.sourceforge.net/project/ikvm/ikvm/7.2.4630.5/ikvmbin-7.2.4630.5.zip
-unzip ikvmbin-7.2.4630.5.zip
+#wget https://netix.dl.sourceforge.net/project/ikvm/ikvm/7.2.4630.5/ikvmbin-7.2.4630.5.zip
+#unzip ikvmbin-7.2.4630.5.zip
 
-#wget https://github.com/jessielesbian/ikvm/releases/download/8.6.5.1/ikvm_8.6.5.1_bin_windows.zip
-#mkdir ikvm8
-#cd ikvm8
-#unzip ../ikvm*.zip
-#cd ..
+wget https://github.com/jessielesbian/ikvm/releases/download/8.6.5.1/ikvm_8.6.5.1_bin_windows.zip
+mkdir ikvm8
+cd ikvm8
+unzip ../ikvm*.zip
+cd ..
 
 # Get CLASSPATH
- mvn dependency:build-classpath -Dmdep.outputFile=cp.txt
+mvn dependency:build-classpath -Dmdep.outputFile=cp.txt
 
 # Copy libraries
 mkdir libs
 cp $(cat cp.txt | sed 's@:@ @g') libs/
 
 # Generate DLL (expect lots of warnings)
-# ./ikvm/ikvmc.exe -target:library libs/* target/proleap-vb6-parser-2.3.0.jar -out:App.dll
+#./ikvm/ikvmc.exe -target:library libs/* target/proleap-vb6-parser-2.3.0.jar -out:App.dll
 ./ikvm-7.2.4630.5/bin/ikvmc.exe -target:library libs/* target/proleap-vb6-parser-2.3.0.jar -out:App.dll
 
 # Copy
 cp App.dll $TARGET/ProLeapParserDLL/App.dll
+
+# Copy IKVM DLLs
+cp ikvm8/*.dll $TARGET/ProLeapParserDLL/
