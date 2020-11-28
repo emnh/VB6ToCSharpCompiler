@@ -9,12 +9,14 @@ mvn clean package
 # Download IKVM
 #wget https://netix.dl.sourceforge.net/project/ikvm/ikvm/7.2.4630.5/ikvmbin-7.2.4630.5.zip
 #unzip ikvmbin-7.2.4630.5.zip
+#wget https://github.com/jessielesbian/ikvm/releases/download/8.6.5.1/ikvm_8.6.5.1_bin_windows.zip
+#mkdir ikvm8
+#cd ikvm8
+#unzip ../ikvm*.zip
+#cd ..
 
-wget https://github.com/jessielesbian/ikvm/releases/download/8.6.5.1/ikvm_8.6.5.1_bin_windows.zip
-mkdir ikvm8
-cd ikvm8
-unzip ../ikvm*.zip
-cd ..
+# First download and install chocolatey (https://chocolatey.org/install), then
+choco install ikvm --version=8.1.5717.0
 
 # Get CLASSPATH
 mvn dependency:build-classpath -Dmdep.outputFile=cp.txt
