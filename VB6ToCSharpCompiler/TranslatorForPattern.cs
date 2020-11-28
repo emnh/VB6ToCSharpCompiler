@@ -19,8 +19,8 @@ namespace VB6ToCSharpCompiler
     public static class TranslatorForPattern
     {
 
+        public static List<PatternText> TranslatorPatterns { get; } = new List<PatternText>();
         private static Dictionary<string, List<VbToCsharpPattern>> compiledPatterns;
-        //private static List<Pattern> compiledPatternsList;
 
         // Statement pattern
         static PatternText S(string VbCode, string CsharpCode)
@@ -241,6 +241,15 @@ namespace VB6ToCSharpCompiler
                     */
             };
 
+            TranslatorPatterns.AddRange(patterns);
+
+            CompileAll();
+        }
+
+        public static void CompileAll()
+        {
+            var patterns = TranslatorPatterns;
+
             compiledPatterns = new Dictionary<string, List<VbToCsharpPattern>>();
             foreach (var patternText in patterns)
             {
@@ -248,7 +257,8 @@ namespace VB6ToCSharpCompiler
                 try
                 {
                     pattern = patternText.Compile();
-                } catch (VbParserException e)
+                }
+                catch (VbParserException e)
                 {
                     DebugClass.LogError("Pattern Compile Failed: " + patternText.LogValue() + ": " + e.toString());
                     throw;
@@ -278,8 +288,6 @@ namespace VB6ToCSharpCompiler
                     }
                 }
             }
-
-            ;
         }
 
         public static bool CanTranslate(Translator translator, ParseTree tree)
@@ -287,6 +295,10 @@ namespace VB6ToCSharpCompiler
             if (tree == null)
             {
                 throw new ArgumentNullException(nameof(tree));
+            }
+            if (translator == null)
+            {
+                throw new ArgumentNullException(nameof(translator));
             }
             var name = VbToCsharpPattern.LookupNodeType(tree);
             if (name == null)
@@ -304,7 +316,7 @@ namespace VB6ToCSharpCompiler
                 canTranslate = false;
                 foreach (var pattern in compiledPatterns[name])
                 {
-                    if (pattern.CanTranslate(translator, tree))
+                    if (pattern.CanTranslate(translator.GetChildren, tree))
                     {
                         canTranslate = true;
                         break;
@@ -345,7 +357,7 @@ namespace VB6ToCSharpCompiler
             var patterns = compiledPatterns[name];
             foreach (var pattern in patterns)
             {
-                if (pattern.CanTranslate(translator, tree))
+                if (pattern.CanTranslate(translator.GetChildren, tree))
                 {
                     return pattern.Translate(translator, tree);
                 }

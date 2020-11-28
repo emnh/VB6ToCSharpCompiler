@@ -19,6 +19,14 @@ using org.antlr.v4.runtime.tree;
 
 // Edit control with syntax highlighting
 
+// Add new form for pattern editing.
+// Display list of patterns.
+// Button to save patterns to file .ini syntax or JSON? JSON.
+
+// Given a directory, show how many matches for each pattern.
+// Browse list of matched patterns. They should already be under same nodetype, i.e. one pattern matches only one nodetype. More or less at least.
+// Browse list of unmatched patterns. Hash by nodetype. With counts.
+
 namespace VB6ToCSharpCompiler
 {
     public class ASTSequenceItem

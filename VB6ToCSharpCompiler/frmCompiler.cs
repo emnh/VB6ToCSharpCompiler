@@ -13,6 +13,7 @@ namespace VB6ToCSharpCompiler
     public partial class frmCompiler : Form
     {
         private frmVB6ASTBrowser frmVb6AstBrowser;
+        private frmPatterns frmPatternsForm;
         private static string Folder = @"F:\VB6Code";
 
         public frmCompiler()
@@ -37,13 +38,7 @@ namespace VB6ToCSharpCompiler
             lstFileNames.Items.Clear();
             foreach (var fileName in VB6Compiler.GetFiles(Folder))
             {
-                if (
-                    fileName.EndsWith(".bas", System.StringComparison.InvariantCulture) ||
-                    fileName.EndsWith(".frm", System.StringComparison.InvariantCulture) ||
-                    fileName.EndsWith(".frx", System.StringComparison.InvariantCulture))
-                {
-                    lstFileNames.Items.Add(fileName);
-                }
+                lstFileNames.Items.Add(fileName);
             }
             //TranslatorForPattern.IntializeTranslatorForPattern();
         }
@@ -62,8 +57,8 @@ namespace VB6ToCSharpCompiler
 
         private void btnTest_Click(object sender, EventArgs e)
         {
-            var fileName = (string)lstFileNames.SelectedItem;
-            
+            frmPatternsForm = new frmPatterns(new List<string>(VB6Compiler.GetFiles(Folder)));
+            frmPatternsForm.Visible = true;
             //var tfp = new TranslatorForPattern();
 
         }

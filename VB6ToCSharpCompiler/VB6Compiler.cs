@@ -20,8 +20,18 @@ namespace VB6ToCSharpCompiler
 {
     public static class VB6Compiler
     {
-        public static string[] GetFiles(string Folder) {
-            return Directory.GetFiles(Folder);
+        public static IEnumerable<string> GetFiles(string Folder) {
+            var files = Directory.GetFiles(Folder);
+            foreach (var fileName in files)
+            {
+                if (
+                    fileName.EndsWith(".bas", System.StringComparison.InvariantCulture) ||
+                    fileName.EndsWith(".frm", System.StringComparison.InvariantCulture) ||
+                    fileName.EndsWith(".frx", System.StringComparison.InvariantCulture))
+                {
+                    yield return fileName;
+                }
+            }
         }
 
         public static void Visit(CompileResult compileResult, VisitorCallback callback)

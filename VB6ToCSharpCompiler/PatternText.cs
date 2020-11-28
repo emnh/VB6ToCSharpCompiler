@@ -60,9 +60,9 @@ public Function Z()
     CONTENT
 End Function";
 
-        private string VbWrapperCode;
-        private string VbCode;
-        private string CSharpCode;
+        public string VbWrapperCode { get; set; }
+        public string VbCode { get; set; }
+        public string CSharpCode { get; set; }
 
         public PatternText(string vbWrapperCode, string vbCode, string csharpCode)
         {

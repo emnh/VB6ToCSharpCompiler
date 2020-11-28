@@ -360,7 +360,7 @@ namespace VB6ToCSharpCompiler
             return returnValue;
         }
 
-        private static ParseTree LookupNodeFromPath(Translator translator, ParseTree root, List<IndexedPath> path,
+        private static ParseTree LookupNodeFromPath(Func<ParseTree, List<ParseTree>> GetChildren, ParseTree root, List<IndexedPath> path,
             bool justCheck = false)
         {
             var node = root;
@@ -368,7 +368,7 @@ namespace VB6ToCSharpCompiler
             {
                 //var child = node.getChild(indexedPath.ChildIndex);
 
-                var children = translator.GetChildren(node);
+                var children = GetChildren(node);
                 if (!(indexedPath.ChildIndex >= 0 && indexedPath.ChildIndex < children.Count))
                 {
                     DebugClass.LogError("Did not find child: " + PrintPath(path) + " in " + root.getText());
@@ -545,16 +545,16 @@ namespace VB6ToCSharpCompiler
         }
 
         // Checks if all pattern identifier variables can be found in tree
-        public bool CanTranslate(Translator translator, ParseTree tree)
+        public bool CanTranslate(Func<ParseTree, List<ParseTree>> GetChildren, ParseTree tree)
         {
-            if (translator == null) throw new ArgumentNullException(nameof(translator));
+            if (GetChildren == null) throw new ArgumentNullException(nameof(GetChildren));
             if (tree == null) throw new ArgumentNullException(nameof(tree));
             if (VbPaths == null) throw new NullReferenceException(nameof(VbPaths));
 
             var canTranslate = true;
             foreach (var path in VbPaths)
             {
-                var node = LookupNodeFromPath(translator, tree, path, true);
+                var node = LookupNodeFromPath(GetChildren, tree, path, true);
                 if (node == null)
                 {
                     canTranslate = false;
@@ -562,7 +562,7 @@ namespace VB6ToCSharpCompiler
                 }
             }
 
-            if (!DoTokensMatch(translator, tree, true))
+            if (!DoTokensMatch(GetChildren, tree, true))
             {
                 canTranslate = false;
             }
@@ -570,9 +570,9 @@ namespace VB6ToCSharpCompiler
             return canTranslate;
         }
 
-        public bool DoTokensMatch(Translator translator, ParseTree tree, bool justCheck = false)
+        public bool DoTokensMatch(Func<ParseTree, List<ParseTree>> GetChildren, ParseTree tree, bool justCheck = false)
         {
-            if (translator == null) throw new ArgumentNullException(nameof(translator));
+            if (GetChildren == null) throw new ArgumentNullException(nameof(GetChildren));
 
             if (tree == null) throw new ArgumentNullException(nameof(tree));
 
@@ -592,7 +592,7 @@ namespace VB6ToCSharpCompiler
                     continue;
                 }
                 var tokenCutPath = tokenInfo.Path.Skip(finalCutDepthOfContent).ToList();
-                var node = LookupNodeFromPath(translator, tree, tokenCutPath, justCheck);
+                var node = LookupNodeFromPath(GetChildren, tree, tokenCutPath, justCheck);
                 if (node == null)
                 {
                     DebugClass.LogError("UNMATCHED TOKENS 1: " + VbTreeNodeType + ":" + PrintPath(tokenCutPath) + ":" + PrintPath(tokenInfo.Path));
@@ -633,7 +633,7 @@ namespace VB6ToCSharpCompiler
 
             if (tree == null) throw new ArgumentNullException(nameof(tree));
 
-            if (!DoTokensMatch(translator, tree))
+            if (!DoTokensMatch(translator.GetChildren, tree))
             {
                 throw new InvalidOperationException("Missing tokens. Fix CanTranslate.");
             }
@@ -650,7 +650,7 @@ namespace VB6ToCSharpCompiler
             {
                 var path = VbPaths[pathIndex];
 
-                var node = LookupNodeFromPath(translator, tree, path);
+                var node = LookupNodeFromPath(translator.GetChildren, tree, path);
 
                 DebugClass.LogError(
                     "Extracting Identifier: " + identifier + " with path " +

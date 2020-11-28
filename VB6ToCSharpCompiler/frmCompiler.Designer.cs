@@ -14,6 +14,7 @@
         protected override void Dispose(bool disposing)
         {
             frmVb6AstBrowser?.Close();
+            frmPatternsForm?.Close();
             if (disposing && (components != null))
             {
                 components.Dispose();
@@ -34,7 +35,7 @@
             this.txtVBCode = new System.Windows.Forms.TextBox();
             this.btnConvert = new System.Windows.Forms.Button();
             this.btnBrowseVB6AST = new System.Windows.Forms.Button();
-            this.btnTest = new System.Windows.Forms.Button();
+            this.btnPatterns = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
@@ -43,7 +44,7 @@
             this.lstFileNames.FormattingEnabled = true;
             this.lstFileNames.ItemHeight = 16;
             this.lstFileNames.Location = new System.Drawing.Point(8, 15);
-            this.lstFileNames.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.lstFileNames.Margin = new System.Windows.Forms.Padding(4);
             this.lstFileNames.Name = "lstFileNames";
             this.lstFileNames.Size = new System.Drawing.Size(352, 724);
             this.lstFileNames.TabIndex = 9;
@@ -52,7 +53,7 @@
             // txtCSharpCode
             // 
             this.txtCSharpCode.Location = new System.Drawing.Point(1055, 15);
-            this.txtCSharpCode.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCSharpCode.Margin = new System.Windows.Forms.Padding(4);
             this.txtCSharpCode.Multiline = true;
             this.txtCSharpCode.Name = "txtCSharpCode";
             this.txtCSharpCode.Size = new System.Drawing.Size(667, 725);
@@ -61,7 +62,7 @@
             // txtVBCode
             // 
             this.txtVBCode.Location = new System.Drawing.Point(369, 15);
-            this.txtVBCode.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtVBCode.Margin = new System.Windows.Forms.Padding(4);
             this.txtVBCode.Multiline = true;
             this.txtVBCode.Name = "txtVBCode";
             this.txtVBCode.Size = new System.Drawing.Size(676, 725);
@@ -70,7 +71,7 @@
             // btnConvert
             // 
             this.btnConvert.Location = new System.Drawing.Point(189, 747);
-            this.btnConvert.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnConvert.Margin = new System.Windows.Forms.Padding(4);
             this.btnConvert.Name = "btnConvert";
             this.btnConvert.Size = new System.Drawing.Size(171, 69);
             this.btnConvert.TabIndex = 6;
@@ -81,7 +82,7 @@
             // btnBrowseVB6AST
             // 
             this.btnBrowseVB6AST.Location = new System.Drawing.Point(369, 747);
-            this.btnBrowseVB6AST.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnBrowseVB6AST.Margin = new System.Windows.Forms.Padding(4);
             this.btnBrowseVB6AST.Name = "btnBrowseVB6AST";
             this.btnBrowseVB6AST.Size = new System.Drawing.Size(173, 69);
             this.btnBrowseVB6AST.TabIndex = 10;
@@ -89,17 +90,17 @@
             this.btnBrowseVB6AST.UseVisualStyleBackColor = true;
             this.btnBrowseVB6AST.Click += new System.EventHandler(this.btnBrowseVB6AST_Click);
             // 
-            // btnTest
+            // btnPatterns
             // 
-            this.btnTest.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(7)))), ((int)(((byte)(208)))));
-            this.btnTest.Location = new System.Drawing.Point(550, 749);
-            this.btnTest.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.btnTest.Name = "btnTest";
-            this.btnTest.Size = new System.Drawing.Size(171, 68);
-            this.btnTest.TabIndex = 11;
-            this.btnTest.Text = "Test";
-            this.btnTest.UseVisualStyleBackColor = false;
-            this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
+            this.btnPatterns.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(7)))), ((int)(((byte)(208)))));
+            this.btnPatterns.Location = new System.Drawing.Point(550, 749);
+            this.btnPatterns.Margin = new System.Windows.Forms.Padding(4);
+            this.btnPatterns.Name = "btnPatterns";
+            this.btnPatterns.Size = new System.Drawing.Size(171, 68);
+            this.btnPatterns.TabIndex = 11;
+            this.btnPatterns.Text = "Patterns";
+            this.btnPatterns.UseVisualStyleBackColor = false;
+            this.btnPatterns.Click += new System.EventHandler(this.btnTest_Click);
             // 
             // button1
             // 
@@ -117,13 +118,13 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1752, 1116);
             this.Controls.Add(this.button1);
-            this.Controls.Add(this.btnTest);
+            this.Controls.Add(this.btnPatterns);
             this.Controls.Add(this.btnBrowseVB6AST);
             this.Controls.Add(this.lstFileNames);
             this.Controls.Add(this.txtCSharpCode);
             this.Controls.Add(this.txtVBCode);
             this.Controls.Add(this.btnConvert);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "frmCompiler";
             this.Text = "VB6 to CSharp Compiler";
             this.Load += new System.EventHandler(this.frmCompiler_Load);
@@ -139,7 +140,7 @@
         private System.Windows.Forms.TextBox txtVBCode;
         private System.Windows.Forms.Button btnConvert;
         private System.Windows.Forms.Button btnBrowseVB6AST;
-        private System.Windows.Forms.Button btnTest;
+        private System.Windows.Forms.Button btnPatterns;
         private System.Windows.Forms.Button button1;
     }
 }

@@ -11,42 +11,17 @@ namespace VB6ToCSharpCompiler
     public class VB6NodeTree
     {
 
-        private readonly Dictionary<ParseTree, List<ParseTree>> children;
-        private readonly Dictionary<ParseTree, int> depths;
-        private readonly Dictionary<ParseTree, ImmutableList<IndexedPath>> paths;
+        private Dictionary<ParseTree, List<ParseTree>> children;
+        private Dictionary<ParseTree, int> depths;
+        private Dictionary<ParseTree, ImmutableList<IndexedPath>> paths;
 
-        public VB6NodeTree(CompileResult compileResult)
-        {
-            children = new Dictionary<ParseTree, List<ParseTree>>();
-
-            var visitorCallback = new VisitorCallback()
-            {
-                Callback = (node, parent) =>
-                {
-                    // Just make sure all nodes, even leaves, have empty children lists
-                    if (!children.ContainsKey(node))
-                    {
-                        children[node] = new List<ParseTree>();
-                    }
-
-                    // Add this to children of parent
-                    if (!children.ContainsKey(node.getParent()))
-                    {
-                        children[node.getParent()] = new List<ParseTree>();
-                    }
-                    children[node.getParent()].Add(node);
-                }
-            };
-            VB6Compiler.Visit(compileResult, visitorCallback);
-        }
-        
-        public VB6NodeTree(ParseTree pnode)
+        public VisitorCallback Init()
         {
             children = new Dictionary<ParseTree, List<ParseTree>>();
             depths = new Dictionary<ParseTree, int>();
             paths = new Dictionary<ParseTree, ImmutableList<IndexedPath>>();
 
-            var visitorCallback = new VisitorCallback()
+            return new VisitorCallback()
             {
                 Callback = (node, parent) =>
                 {
@@ -97,9 +72,27 @@ namespace VB6ToCSharpCompiler
                     paths[node] = paths[node.getParent()].Add(new IndexedPath(VbToCsharpPattern.LookupNodeType(node), childIndex, token));
                 }
             };
+        }
 
+        public VB6NodeTree(CompileResult compileResult)
+        {
+            var visitorCallback = Init();
+            VB6Compiler.Visit(compileResult, visitorCallback);
+        }
+        
+        public VB6NodeTree(ParseTree pnode)
+        {
+            var visitorCallback = Init();
             var visitor = new VB6ASTTreeViewGeneratorVisitor(visitorCallback);
             visitor.visit(pnode);
+        }
+
+        public IEnumerable<ParseTree> GetAllNodes()
+        {
+            foreach (var key in children.Keys)
+            {
+                yield return key;
+            }
         }
 
         public ParseTree GetRoot()
