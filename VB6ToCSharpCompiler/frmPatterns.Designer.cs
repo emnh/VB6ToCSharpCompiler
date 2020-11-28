@@ -35,10 +35,11 @@
             // grdPatterns
             // 
             this.grdPatterns.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.grdPatterns.Location = new System.Drawing.Point(12, 12);
+            this.grdPatterns.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.grdPatterns.Location = new System.Drawing.Point(0, 0);
             this.grdPatterns.Name = "grdPatterns";
             this.grdPatterns.RowTemplate.Height = 24;
-            this.grdPatterns.Size = new System.Drawing.Size(452, 710);
+            this.grdPatterns.Size = new System.Drawing.Size(1068, 734);
             this.grdPatterns.TabIndex = 0;
             this.grdPatterns.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellContentClick);
             // 

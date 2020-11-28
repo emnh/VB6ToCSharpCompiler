@@ -43,7 +43,7 @@ namespace VB6ToCSharpCompiler
                    {
                        DebugClass.Init();
 
-                       if (o.Verbose)
+                       if (o.Verbose || o.GUI)
                        {
                            DebugClass.Enabled = true;
                        }

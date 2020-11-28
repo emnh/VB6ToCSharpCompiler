@@ -98,7 +98,7 @@
             this.btnPatterns.Name = "btnPatterns";
             this.btnPatterns.Size = new System.Drawing.Size(171, 68);
             this.btnPatterns.TabIndex = 11;
-            this.btnPatterns.Text = "Patterns";
+            this.btnPatterns.Text = "Patterns (Patience..)";
             this.btnPatterns.UseVisualStyleBackColor = false;
             this.btnPatterns.Click += new System.EventHandler(this.btnTest_Click);
             // 
