@@ -1,3 +1,4 @@
+```bash
 # To rebuild the DLL
 sudo apt install maven
 git clone https://github.com/uwol/proleap-vb6-parser
@@ -31,3 +32,4 @@ cp App.dll $TARGET/ProLeapParserDLL/App.dll
 
 # Copy IKVM DLLs
 cp ikvm8/*.dll $TARGET/ProLeapParserDLL/
+```
