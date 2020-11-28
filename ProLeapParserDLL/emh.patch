@@ -1,0 +1,26 @@
+diff --git a/src/main/antlr4/io/proleap/vb6/VisualBasic6.g4 b/src/main/antlr4/io/proleap/vb6/VisualBasic6.g4
+index d249125..170ffe4 100755
+--- a/src/main/antlr4/io/proleap/vb6/VisualBasic6.g4
++++ b/src/main/antlr4/io/proleap/vb6/VisualBasic6.g4
+@@ -2086,12 +2086,12 @@ WS
+ // letters
+ 
+ fragment LETTER
+-   : [a-zA-Z_äöüÄÖÜáéíóúÁÉÍÓÚâêîôûÂÊÎÔÛàèìòùÀÈÌÒÙãẽĩõũÃẼĨÕŨçÇ]
++   : [a-zA-Z_äöüÄÖÜáéíóúÁÉÍÓÚâêîôûÂÊÎÔÛàèìòùÀÈÌÒÙãẽĩõũÃẼĨÕŨçÇæøåÆØÅ]
+    ;
+ 
+ 
+ fragment LETTERORDIGIT
+-   : [a-zA-Z0-9_äöüÄÖÜáéíóúÁÉÍÓÚâêîôûÂÊÎÔÛàèìòùÀÈÌÒÙãẽĩõũÃẼĨÕŨçÇ]
++   : [a-zA-Z0-9_äöüÄÖÜáéíóúÁÉÍÓÚâêîôûÂÊÎÔÛàèìòùÀÈÌÒÙãẽĩõũÃẼĨÕŨçÇæøåÆØÅ]
+    ;
+ 
+ // case insensitive chars
+@@ -2223,4 +2223,4 @@ fragment Y
+ 
+ fragment Z
+    : ('z' | 'Z')
+-   ;
+\ No newline at end of file
++   ;
