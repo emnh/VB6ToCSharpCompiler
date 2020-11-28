@@ -6,11 +6,23 @@ cd proleap-vb6-parser
 mvn clean package
 
 # Download IKVM
-wget https://netix.dl.sourceforge.net/project/ikvm/ikvm/7.2.4630.5/ikvmbin-7.2.4630.5.zip
-unzip ikvmbin-7.2.4630.5.zip
-./ikvm-7.2.4630.5/bin/ikvmc.exe target/proleap-vb6-parser-2.3.0.jar
+# wget https://netix.dl.sourceforge.net/project/ikvm/ikvm/7.2.4630.5/ikvmbin-7.2.4630.5.zip
+# unzip ikvmbin-7.2.4630.5.zip
+wget https://github.com/jessielesbian/ikvm/releases/download/8.6.5.1/ikvm_8.6.5.1_bin_windows.zip
+mkdir ikvm8
+cd ikvm8
+unzip ../ikvm*.zip
+cd ..
+
+# Get CLASSPATH
+ mvn dependency:build-classpath -Dmdep.outputFile=cp.txt
+
+# Copy libraries
+mkdir libs
+cp $(cat cp.txt | sed 's@:@ @g') libs/
+
+# Generate DLL
+./ikvm8/ikvmc.exe -target:library libs/* target/proleap-vb6-parser-2.3.0.jar -out:App.dll
 
 # Copy
-cp target/proleap-vb6-parser-2.3.0.dll $TARGET/ProLeapParserDLL/App.dll
-
-# TODO: Question? Why is the old DLL 18 MB and the new one is 600k? Missing something / debug version?
+cp App.dll $TARGET/ProLeapParserDLL/App.dll
