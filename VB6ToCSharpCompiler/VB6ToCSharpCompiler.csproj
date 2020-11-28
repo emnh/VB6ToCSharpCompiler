@@ -221,6 +221,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ASTPatternGenerator.cs" />
     <Compile Include="ASTSequenceItem.cs" />
     <Compile Include="CsharpVisitorCallback.cs" />
     <Compile Include="CustomCSharpSyntaxWalker.cs" />
@@ -235,6 +236,7 @@
     <Compile Include="JavaUtil.cs" />
     <Compile Include="TranslatorForForm.cs" />
     <Compile Include="VB6NodeTree.cs" />
+    <Compile Include="VB6SubTree.cs" />
     <Compile Include="VbToCsharpPattern.cs" />
     <Compile Include="PatternText.cs" />
     <Compile Include="TokenInfo.cs" />

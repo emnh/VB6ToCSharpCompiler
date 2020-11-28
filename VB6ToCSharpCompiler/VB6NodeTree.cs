@@ -8,9 +8,10 @@ using org.antlr.v4.runtime.tree;
 
 namespace VB6ToCSharpCompiler
 {
+    
+
     public class VB6NodeTree
     {
-
         private Dictionary<ParseTree, List<ParseTree>> children;
         private Dictionary<ParseTree, int> depths;
         private Dictionary<ParseTree, ImmutableList<IndexedPath>> paths;
@@ -74,6 +75,11 @@ namespace VB6ToCSharpCompiler
             };
         }
 
+        public VB6NodeTree()
+        {
+
+        }
+
         public VB6NodeTree(CompileResult compileResult)
         {
             var visitorCallback = Init();
@@ -87,7 +93,7 @@ namespace VB6ToCSharpCompiler
             visitor.visit(pnode);
         }
 
-        public IEnumerable<ParseTree> GetAllNodes()
+        public virtual IEnumerable<ParseTree> GetAllNodes()
         {
             foreach (var key in children.Keys)
             {

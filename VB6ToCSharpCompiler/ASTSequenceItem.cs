@@ -36,30 +36,48 @@ namespace VB6ToCSharpCompiler
         public string childPath { get; set; }
         public string typeName { get; set; }
         public string token { get; set; }
+        public string pattern { get; set; }
 
-        public static List<ASTSequenceItem> Create(ParseTree node)
+        public static List<ASTSequenceItem> Create(ASTPatternGenerator apg, ParseTree rootNode)
         {
-            //var VbCode = "A & B";
-            //var CsharpCode = "A + B";
-            //var pattern = new PatternText(PatternText.vbExpressionWrapper, VbCode, CsharpCode);
-            //var realPattern = pattern.Compile();
-
-            //var thosePaths = realPattern.GetVBPaths();
-            var thosePaths = VbToCsharpPattern.GetExtendedPathList(node);
-
-            List<ASTSequenceItem> returnedList = new List<ASTSequenceItem> { };
-            foreach (ImmutableList<IndexedPath> paths in thosePaths)
+            if (apg == null)
             {
+                throw new ArgumentNullException(nameof(apg));
+            }
+
+            VB6NodeTree nodeTree = new VB6NodeTree(rootNode);
+            List<ASTSequenceItem> returnedList = new List<ASTSequenceItem> { };
+
+            foreach (var node in nodeTree.GetAllNodes())
+            {
+                var subtree = new VB6SubTree(nodeTree, node);
+                var pattern = apg.Lookup(subtree);
+
                 int depth = 0;
                 string childIndices = "";
                 string typePath = "";
+
+                var paths = nodeTree.GetPath(node).ToList();
+                if (paths.Count == 0)
+                {
+                    continue;
+                }
+
                 foreach (IndexedPath path in paths)
                 {
-                    depth++;
                     childIndices += path.ChildIndex + "/";
                     typePath += path.NodeTypeName + "/";
+                    depth++;
                 }
-                var asi = new ASTSequenceItem { setpos = returnedList.Count, depth = depth, childPath = childIndices, token = paths.Last().Token, typeName = paths.Last().NodeTypeName};
+
+                var asi = new ASTSequenceItem {
+                    setpos = returnedList.Count,
+                    depth = depth,
+                    childPath = childIndices,
+                    token = paths.Last().Token,
+                    typeName = paths.First().NodeTypeName,
+                    pattern = pattern
+                };
                 returnedList.Add(asi);
             }
             return returnedList;
@@ -75,6 +93,16 @@ namespace VB6ToCSharpCompiler
             foreach (var asi in list.Take(1000))
             {
                 s += asi.ToString() + "\r\n";
+            }
+            return s;
+        }
+
+        public static string HashNodes(List<ASTSequenceItem> list)
+        {
+            string s = "";
+            foreach (var asi in list.Take(1000))
+            {
+                s += asi.pattern + " ";
             }
             return s;
         }

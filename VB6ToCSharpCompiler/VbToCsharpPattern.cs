@@ -136,38 +136,13 @@ namespace VB6ToCSharpCompiler
             {
                 Callback = (node, parent) =>
                 {
-                    //DebugClass.Log("Node: " + PrintPath(GetExtendedPathList(nodeTree, node)) + ": " + node.getText());
-
                     if (root == null) root = node;
-
                     paths.Add(nodeTree.GetPath(node));
-                    //if (nodeTree.GetDepth(node) < 10)
-                    //{
-                    //    var path = GetExtendedPathList(nodeTree, node);
-                    //    Console.WriteLine("NODE: " + string.Join("/", path));
-                        
-                    //    paths.Add(path);
-                    //}
-
-                    //var i = 0;
-                    //foreach (var identifier in PatternIdentifiers)
-                    //{
-                    //    if (node.getText().Trim('"') == identifier &&
-                    //        IsInsideSubOrFunction(translator.GetExtendedPathList(node)))
-                    //    {
-                    //        var path = translator.GetExtendedPathList(node);
-                    //        if (paths[i] == null) paths[i] = path;
-                    //    }
-
-                    //    i++;
-                    //}
                 }
             };
             
             var visitor = new VB6ASTTreeViewGeneratorVisitor(visitorCallback);
             visitor.visit(pnode);
-            //VB6Compiler.Visit(compileResult, visitorCallback);
-
             return paths;
         }
 
