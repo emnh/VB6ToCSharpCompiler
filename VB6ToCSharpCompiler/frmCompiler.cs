@@ -57,9 +57,12 @@ namespace VB6ToCSharpCompiler
 
         private void btnTest_Click(object sender, EventArgs e)
         {
+            var enabled = DebugClass.Enabled;
+            DebugClass.Enabled = false;
             frmPatternsForm = new frmPatterns(new List<string>(VB6Compiler.GetFiles(Folder)));
             frmPatternsForm.Visible = true;
             //var tfp = new TranslatorForPattern();
+            DebugClass.Enabled = enabled;
 
         }
 
