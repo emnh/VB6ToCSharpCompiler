@@ -1,30 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Collections.Generic;
 using CommandLine;
 
 namespace VB6ToCSharpCompiler
 {
+    public class CommandLineOptions
+    {
+        [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages.")]
+        public bool Verbose { get; set; }
+
+        [Option('c', "compile", Required = false, HelpText = "Compile files.")]
+        public bool Compile { get; set; }
+
+        [Option('g', "gui", Required = false, HelpText = "Show GUI.")]
+        public bool GUI { get; set; }
+
+        [Option]
+        public IEnumerable<string> Files { get; set; }
+    }
+
     class Program
     {
-        public class Options
-        {
-            [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages.")]
-            public bool Verbose { get; set; }
-
-            [Option('c', "compile", Required = false, HelpText = "Compile files.")]
-            public bool Compile { get; set; }
-
-            [Option('g', "gui", Required = false, HelpText = "Show GUI.")]
-            public bool GUI { get; set; }
-
-            [Option]
-            public IEnumerable<string> Files { get; set; }
-        }
-
         public static void Compile(IEnumerable<string> Files)
         {
             foreach (var fname in Files)
@@ -45,8 +42,8 @@ namespace VB6ToCSharpCompiler
 
             TranslatorForPattern.IntializeTranslatorForPattern();
 
-            Parser.Default.ParseArguments<Options>(args)
-                   .WithParsed<Options>(o =>
+            Parser.Default.ParseArguments<CommandLineOptions>(args)
+                   .WithParsed<CommandLineOptions>(o =>
                    {
                        DebugClass.Init();
 

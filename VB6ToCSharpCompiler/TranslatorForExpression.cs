@@ -138,7 +138,7 @@ namespace VB6ToCSharpCompiler
                 {
                     return SyntaxFactory.ParseExpression("System.Drawing.Color.FromArgb(" + result + ")");
                 }
-                else if (value.StartsWith("&H"))
+                else if (value.StartsWith("&H", StringComparison.InvariantCulture))
                 {
                     var hexValue = value.Trim('&').Trim('H');
                     return SyntaxFactory.ParseExpression("(Color)ColorConverter.ConvertFromString(\"" + hexValue + "\")");

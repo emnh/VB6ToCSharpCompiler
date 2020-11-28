@@ -85,6 +85,11 @@ namespace VB6ToCSharpCompiler
         }
         public static List<IndexedPath> GetExtendedPathList(VB6NodeTree nodeTree, ParseTree node)
         {
+            if (nodeTree == null)
+            {
+                throw new ArgumentNullException(nameof(nodeTree));
+            }
+
             var iterationNode = node;
             var s = new List<IndexedPath>();
             int depth = 0;
@@ -544,7 +549,7 @@ namespace VB6ToCSharpCompiler
         {
             if (translator == null) throw new ArgumentNullException(nameof(translator));
             if (tree == null) throw new ArgumentNullException(nameof(tree));
-            if (VbPaths == null) throw new ArgumentNullException(nameof(VbPaths));
+            if (VbPaths == null) throw new NullReferenceException(nameof(VbPaths));
 
             var canTranslate = true;
             foreach (var path in VbPaths)

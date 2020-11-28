@@ -291,11 +291,11 @@ namespace VB6ToCSharpCompiler
             var name = VbToCsharpPattern.LookupNodeType(tree);
             if (name == null)
             {
-                throw new ArgumentNullException(nameof(name));
+                throw new NullReferenceException(nameof(name));
             }
             if (compiledPatterns == null)
             {
-                throw new ArgumentNullException(nameof(compiledPatterns));
+                throw new NullReferenceException(nameof(compiledPatterns));
             }
 
             var canTranslate = compiledPatterns.ContainsKey(name);

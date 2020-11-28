@@ -208,7 +208,7 @@ namespace VB6ToCSharpCompiler
         }
 
         [Obsolete("Old style method. I switched to parsing text instead of constructing syntax tree with calls.")]
-        public StatementSyntax PropertyAssignment(string controlName, string propertyName, LiteralExpressionSyntax value)
+        public static StatementSyntax PropertyAssignment(string controlName, string propertyName, LiteralExpressionSyntax value)
         {
 
             var control = SyntaxFactory.IdentifierName(controlName);
@@ -238,7 +238,7 @@ namespace VB6ToCSharpCompiler
             if (!seenProperties.ContainsKey(propertyName))
             {
                 DebugClass.LogError("// Control: " + ctrlType);
-                DebugClass.LogError(String.Format("{{\"{0}\", \"{0}\"}},", propertyName));
+                DebugClass.LogError(String.Format(System.Globalization.CultureInfo.InvariantCulture, "{{\"{0}\", \"{0}\"}},", propertyName));
                 seenProperties[propertyName] = true;
             }
             

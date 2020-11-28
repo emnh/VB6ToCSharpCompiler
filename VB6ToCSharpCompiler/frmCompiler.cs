@@ -13,6 +13,7 @@ namespace VB6ToCSharpCompiler
     public partial class frmCompiler : Form
     {
         private frmVB6ASTBrowser frmVb6AstBrowser;
+        private static string Folder = @"F:\VB6Code";
 
         public frmCompiler()
         {
@@ -34,7 +35,7 @@ namespace VB6ToCSharpCompiler
         private void ShowFiles()
         {
             lstFileNames.Items.Clear();
-            foreach (var fileName in VB6Compiler.GetFiles())
+            foreach (var fileName in VB6Compiler.GetFiles(Folder))
             {
                 if (
                     fileName.EndsWith(".bas", System.StringComparison.InvariantCulture) ||
@@ -80,7 +81,7 @@ namespace VB6ToCSharpCompiler
 
                 if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
                 {
-                    VB6Compiler.Folder = fbd.SelectedPath;
+                    Folder = fbd.SelectedPath;
                 }
             }
             ShowFiles();

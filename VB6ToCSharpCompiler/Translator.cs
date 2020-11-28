@@ -203,7 +203,7 @@ namespace VB6ToCSharpCompiler
         }
 
         
-        public ExpressionSyntax GetExpression(ParseTree tree, List<StatementSyntax> statements)
+        public ExpressionSyntax GetExpression(ParseTree tree)
         {
             var tfe = new TranslatorForExpression(this);
             return tfe.GetExpression(tree);
@@ -253,14 +253,14 @@ namespace VB6ToCSharpCompiler
             }
             else
             {
-                return GetExpression(tree, new List<StatementSyntax>());
+                return GetExpression(tree);
             }
         }
 
-        public ExpressionSyntax GetRightHandSide(LetImpl asg, List<StatementSyntax> statementList)
+        public ExpressionSyntax GetRightHandSide(LetImpl asg)
         {
             if (asg == null) throw new ArgumentNullException(nameof(asg));
-            var right = GetExpression(asg.getRightHandValueStmt().getCtx(), statementList);
+            var right = GetExpression(asg.getRightHandValueStmt().getCtx());
             return right;
         }
 
@@ -293,7 +293,7 @@ namespace VB6ToCSharpCompiler
                      ((LetImpl) Program.getASGElementRegistry().getASGElement(stmt)).isSettingReturnVariable())
             {
                 var left = SyntaxFactory.IdentifierName(FunctionReturnValueName);
-                var right = GetRightHandSide(((LetImpl)Program.getASGElementRegistry().getASGElement(stmt)), returnValue);
+                var right = GetRightHandSide(((LetImpl)Program.getASGElementRegistry().getASGElement(stmt)));
                 returnValue.Add(GetAssignment(left, right));
             }
             else if (tree is VisualBasic6Parser.BlockContext block)

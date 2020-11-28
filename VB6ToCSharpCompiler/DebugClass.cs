@@ -9,9 +9,10 @@ namespace VB6ToCSharpCompiler
 {
     public static class DebugClass
     {
-        public static bool Enabled = false;
-        public static TextWriter console;
-        public static TextWriter error;
+        private static TextWriter console;
+        private static TextWriter error;
+
+        public static bool Enabled { get; set; } = false;
 
         public static void Init()
         {
