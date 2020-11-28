@@ -45,7 +45,7 @@ namespace VB6ToCSharpCompiler
                     lstFileNames.Items.Add(fileName);
                 }
             }
-            TranslatorForPattern.IntializeTranslatorForPattern();
+            //TranslatorForPattern.IntializeTranslatorForPattern();
         }
 
         private void frmCompiler_Load(object sender, EventArgs e)

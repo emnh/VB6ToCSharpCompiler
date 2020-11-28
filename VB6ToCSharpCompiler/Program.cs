@@ -36,11 +36,7 @@ namespace VB6ToCSharpCompiler
 
         static void Main(string[] args)
         {
-            
-
-            Console.Error.WriteLine("Hello World!");
-
-            TranslatorForPattern.IntializeTranslatorForPattern();
+            Console.Error.WriteLine("Use -g option to start GUI, or --help to show help for command line.");
 
             Parser.Default.ParseArguments<CommandLineOptions>(args)
                    .WithParsed<CommandLineOptions>(o =>
@@ -50,6 +46,11 @@ namespace VB6ToCSharpCompiler
                        if (o.Verbose)
                        {
                            DebugClass.Enabled = true;
+                       }
+
+                       if (o.Compile || o.GUI)
+                       {
+                           TranslatorForPattern.IntializeTranslatorForPattern();
                        }
 
                        if (o.Compile)
