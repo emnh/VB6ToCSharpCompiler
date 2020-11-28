@@ -25,7 +25,7 @@ namespace VB6ToCSharpCompiler
     {
         public int setpos { get; set; }
         public int depth { get; set; }
-        public int childIndex { get; set; }
+        public string childPath { get; set; }
         public string typeName { get; set; }
         public string token { get; set; }
 
@@ -43,18 +43,22 @@ namespace VB6ToCSharpCompiler
             foreach (ImmutableList<IndexedPath> paths in thosePaths)
             {
                 int depth = 0;
+                string childIndices = "";
+                string typePath = "";
                 foreach (IndexedPath path in paths)
                 {
                     depth++;
-                    var asi = new ASTSequenceItem { setpos = returnedList.Count, depth = depth, childIndex = path.ChildIndex, token = paths.Last().Token, typeName = path.NodeTypeName };
-                    returnedList.Add(asi);
+                    childIndices += path.ChildIndex + "/";
+                    typePath += path.NodeTypeName + "/";
                 }
+                var asi = new ASTSequenceItem { setpos = returnedList.Count, depth = depth, childPath = childIndices, token = paths.Last().Token, typeName = paths.Last().NodeTypeName};
+                returnedList.Add(asi);
             }
             return returnedList;
         }
 
         public override string ToString() {
-            return "(" + setpos + ", " + depth + ", " + childIndex + ", " + typeName + ", " + token + ")";
+            return "(" + setpos + ", " + depth + ", " + childPath + ", " + typeName + ", " + token + ")";
         }
 
         public static string ToString(List<ASTSequenceItem> list)
