@@ -4,6 +4,11 @@ sudo apt install maven
 git clone https://github.com/uwol/proleap-vb6-parser
 cd proleap-vb6-parser
 # TODO: apply emh.patch for Norwegian letters
+
+# Remove logging statements
+sed -i 's@LOG\.@// NOPE\.@' $(fgrep -ir 'LOG.' . -m1 src | cut -f1 -d:)
+
+# Build
 mvn clean package
 
 # Download IKVM
