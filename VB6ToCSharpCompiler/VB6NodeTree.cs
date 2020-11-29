@@ -71,6 +71,11 @@ namespace VB6ToCSharpCompiler
                         token += "...";
                     }
                     paths[node] = paths[node.getParent()].Add(new IndexedPath(VbToCsharpPattern.LookupNodeType(node), childIndex, token));
+
+                    //for (int i = 0; i < node.getChildCount(); i++)
+                    //{
+                    //    node.getChild(i);
+                    //}
                 }
             };
         }

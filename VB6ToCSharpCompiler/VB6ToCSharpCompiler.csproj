@@ -223,6 +223,7 @@
   <ItemGroup>
     <Compile Include="ASTPatternGenerator.cs" />
     <Compile Include="ASTSequenceItem.cs" />
+    <Compile Include="Contexts.cs" />
     <Compile Include="CsharpVisitorCallback.cs" />
     <Compile Include="CustomCSharpSyntaxWalker.cs" />
     <Compile Include="DebugClass.cs" />

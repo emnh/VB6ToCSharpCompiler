@@ -616,7 +616,7 @@ namespace VB6ToCSharpCompiler
                     catch (Exception e)
                     {
                         Console.WriteLine("Exception : {0} ", e.Message);
-                        throw;
+                        //throw;
                     }
                 }
 

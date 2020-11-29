@@ -10,9 +10,13 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using com.sun.org.apache.bcel.@internal.generic;
 using com.sun.org.apache.xml.@internal.dtm.@ref;
+using io.proleap.vb6;
 using io.proleap.vb6.asg.metamodel;
+using java.io;
+using java.nio.charset;
 using javax.swing.filechooser;
 using jdk.nashorn.@internal.codegen;
+using org.antlr.v4.runtime;
 using org.antlr.v4.runtime.tree;
 
 namespace VB6ToCSharpCompiler
@@ -71,13 +75,59 @@ namespace VB6ToCSharpCompiler
             //treVB6AST.ExpandAll();
         }
 
+        public static string GetTokens(ParseTree node)
+        {
+            if (node == null)
+            {
+                throw new ArgumentNullException(nameof(node));
+            }
+
+            var s = "TOKENS: ";
+            for (int i = 0; i < node.getChildCount(); i++)
+            {
+                var child = node.getChild(i);
+                var text = child.getText().Trim();
+                if (text.Length > 0)
+                {
+                    if (child is TerminalNodeImpl)
+                    {
+                        var terminalNode = (TerminalNodeImpl) child;
+                        var payload = terminalNode.getPayload();
+                        var token = terminalNode.getSymbol();
+                        //s += payload + ":" + token + "\r\n";
+                        s += token.GetType() + ":" + token + "\r\n";
+                    }
+                }
+            }
+
+            //var c = node.getPayload();
+            
+            //var text = node.getText();
+            //using (var inputStream = new ByteArrayInputStream(Encoding.GetEncoding(1252).GetBytes(text)))
+            //{
+            //    var charset = Charset.forName("Windows-1252");
+            //    var lexer = new VisualBasic6Lexer(CharStreams.fromStream(inputStream, charset));
+            //    var cts = new CommonTokenStream(lexer);
+            //    var tokens = cts.getTokens();
+            //    for (int i = 0; i < tokens.size(); i++)
+            //    {
+            //        var token = (Token) tokens.get(i);
+            //        s += token.GetType().ToString() + "++";
+            //    }
+            //}
+
+            return s;
+        }
+
         private void treVB6AST_AfterSelect(object sender, TreeViewEventArgs e)
         {
             var node = (ParseTree) treVB6AST.SelectedNode.Tag;
             txtDebug.Text = translator.Dump(node) + "\r\n";
 
-            //var apg = new ASTPatternGenerator((ParseTree) treVB6AST.Nodes[0].Tag);
-            var asiList = ASTSequenceItem.Create(node);
+            txtDebug.Text += GetTokens(node) + "\r\n";
+
+            var apg = new ASTPatternGenerator((ParseTree) treVB6AST.Nodes[0].Tag);
+            var asiList = ASTSequenceItem.Create(apg, node);
             txtDebug.Text += ASTSequenceItem.ToString(asiList) + "\r\n";
 
         }

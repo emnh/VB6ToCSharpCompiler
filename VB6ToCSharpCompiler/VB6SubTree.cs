@@ -35,7 +35,7 @@ namespace VB6ToCSharpCompiler
                     yield return child;
                     foreach (var child2 in GCRec(child))
                     {
-                        yield return child;
+                        yield return child2;
                     }
                 }
             }

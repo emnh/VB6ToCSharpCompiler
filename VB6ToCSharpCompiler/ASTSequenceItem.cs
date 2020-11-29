@@ -37,9 +37,15 @@ namespace VB6ToCSharpCompiler
         public string typeName { get; set; }
         public string token { get; set; }
         public string pattern { get; set; }
+        public ParseTree node { get; set; }
 
-        public static List<ASTSequenceItem> Create(ParseTree rootNode)
+        public static List<ASTSequenceItem> Create(ASTPatternGenerator apg, ParseTree rootNode)
         {
+            if (apg == null)
+            {
+                throw new ArgumentNullException(nameof(apg));
+            }
+
             VB6NodeTree nodeTree = new VB6NodeTree(rootNode);
             List<ASTSequenceItem> returnedList = new List<ASTSequenceItem> { };
 
@@ -70,7 +76,8 @@ namespace VB6ToCSharpCompiler
                     childPath = childIndices,
                     token = paths.Last().Token,
                     typeName = paths.First().NodeTypeName,
-                    pattern = "UNKNOWN"
+                    pattern = apg.Lookup(subtree),
+                    node = node
                 };
                 returnedList.Add(asi);
             }
@@ -78,7 +85,7 @@ namespace VB6ToCSharpCompiler
         }
 
         public override string ToString() {
-            return "(" + setpos + ", " + depth + ", " + childPath + ", " + typeName + ", " + token + ")";
+            return "(" + setpos + ", " + depth + ", " + childPath + ", " + typeName + ", " + token + "): " + pattern;
         }
 
         public static string ToString(List<ASTSequenceItem> list)

@@ -9,8 +9,8 @@ namespace VB6ToCSharpCompiler
 {
     public class ASTPatternGenerator
     {
-        private Dictionary<string, List<VB6SubTree>> nodeHash = new Dictionary<string, List<VB6SubTree>>();
-        private Dictionary<string, string> generatedPatterns = new Dictionary<string, string>();
+        private Dictionary<string, Dictionary<string, List<VB6SubTree>>> nodeHashDict = new Dictionary<string, Dictionary<string, List<VB6SubTree>>>();
+        private Dictionary<ParseTree, string> generatedPatterns = new Dictionary<ParseTree, string>();
 
         public ASTPatternGenerator(ParseTree node)
         {
@@ -18,14 +18,52 @@ namespace VB6ToCSharpCompiler
             GetPatterns(nodeTree);
         }
 
+        public static string GetNodeHash(ParseTree node)
+        {
+            if (node == null)
+            {
+                throw new ArgumentNullException(nameof(node));
+            }
+
+            return node.GetType().Name;
+        }
+
         public string Lookup(VB6SubTree subTree)
         {
-            var s = GetNodeTreeHashString(subTree);
-            if (generatedPatterns.ContainsKey(s))
+            if (subTree == null)
             {
-                return generatedPatterns[s];
+                throw new ArgumentNullException(nameof(subTree));
             }
-            return s;
+
+            //var t = GetNodeHash(subTree.GetRoot());
+            var t = subTree.GetRoot();
+            if (generatedPatterns.ContainsKey(t))
+            {
+                return generatedPatterns[t];
+            }
+            return null;
+        }
+
+        //public static IEnumerable<org.antlr.v4.runtime.Token> GetTokens(ParseTree node)
+        public static IEnumerable<string> GetTokens(ParseTree node)
+        {
+            if (node == null)
+            {
+                throw new ArgumentNullException(nameof(node));
+            }
+
+            for (int i = 0; i < node.getChildCount(); i++)
+            {
+                var child = node.getChild(i);
+                var text = child.getText().Trim();
+                if (text.Length > 0)
+                {
+                    if (child is TerminalNodeImpl)
+                    {
+                        yield return ((TerminalNodeImpl) child).getSymbol().getText();
+                    }
+                }
+            }
         }
 
         public void GetPatterns(VB6NodeTree nodeTree)
@@ -39,88 +77,90 @@ namespace VB6ToCSharpCompiler
             {
                 var subtree = new VB6SubTree(nodeTree, node);
 
-                var nodeTreeHashString = GetNodeTreeHashString(subtree);
-
-                if (!nodeHash.ContainsKey(nodeTreeHashString))
+                //var nodeTreeHashString = GetNodeTreeHashString(subtree);
+                var nodeHash = GetNodeHash(node);
+                
+                if (!nodeHashDict.ContainsKey(nodeHash))
                 {
-                    nodeHash[nodeTreeHashString] = new List<VB6SubTree>();
+                    nodeHashDict[nodeHash] = new Dictionary<string, List<VB6SubTree>>();
                 }
-                nodeHash[nodeTreeHashString].Add(subtree);
+                var tokens = String.Join(" ", GetTokens(node));
+                if (!nodeHashDict[nodeHash].ContainsKey(tokens))
+                {
+                    nodeHashDict[nodeHash][tokens] = new List<VB6SubTree>();
+                }
+                nodeHashDict[nodeHash][tokens].Add(subtree);
             }
 
-            // Iterate over all nodes and replace each token/text in pattern,
-            // if there are two or more variations of this token in this particular location
-            foreach (var key in nodeHash.Keys)
+            foreach (var key in nodeHashDict.Keys)
             {
-                string letters = "ABCDEFGHIJKLMNOPQRSTUVXYZ";
-                int letterIndex = 0;
-                Dictionary<int, string> hashTokens = new Dictionary<int, string>();
-                //Dictionary<string, List<int>> textCount = new Dictionary<string, List<int>>();
-
-                foreach (var subtree in nodeHash[key])
+                foreach (var key2 in nodeHashDict[key].Keys)
                 {
-                    var node = subtree.GetRoot();
-
-                    var tokensSoFar = node.getSourceInterval();
-                    //var a = tokensSoFar.a;
-                    //var b = tokensSoFar.b;
-                    //var text = node.getText();
-                    var code = nodeTree.GetRoot().getText();
-                    var text = code;
-
-                    bool[] claimed = new bool[code.Length];
-                    for (int i = 0; i < code.Length; i++)
+                    var s = new List<string>();
+                    foreach (var subtree in nodeHashDict[key][key2])
                     {
-                        claimed[i] = false;
+                        var node = subtree.GetRoot();
+                        var tokens = String.Join(" ", GetTokens(node));
+                        s.Add(tokens);
                     }
+                    var s2 = String.Join(", ", s);
+                    DebugClass.LogError("NodeTreeHashString: " + key + " " + key2 + ": " + nodeHashDict[key][key2].Count + ": " + s2);
+                }
+            }
 
-                    var nodes = subtree.GetAllNodes().ToList();
-                    var nodeList = new List<Tuple<int, ParseTree>>();
-                    var childIndex = 0;
-                    foreach (var child in nodes)
+            // TODO: Is it possible to auto-generate this dictionary?
+            // No stress, it's small, but would be nice for other languages.
+            var replaceable = new Dictionary<string, bool>();
+            replaceable["AmbiguousIdentifierContext"] = true;
+            replaceable["CertainIdentifierContext"] = true;
+            replaceable["LiteralContext"] = true;
+            replaceable["FieldLengthContext"] = true;
+
+            // Iterate over all nodes and replace each token/text in pattern with pattern letter,
+            // if there are two or more variations of this token under this node type name
+            const string letters = "ABCDEFGHIJKLMNOPQRSTUVXYZ";
+            foreach (var node in nodeTree.GetAllNodes())
+            {
+                var subtree = new VB6SubTree(nodeTree, node);
+                int letterIndex = 0;
+                var text = node.getText();
+                var pattern = text;
+                
+                foreach (var child in subtree.GetAllNodes())
+                {
+                    if (replaceable.ContainsKey(VbToCsharpPattern.LookupNodeType(child)))
                     {
-                        nodeList.Add(Tuple.Create(childIndex, child));
-                        childIndex++;
-                    }
-                    nodeList.Sort((a, b) => nodeTree.GetDepth(b.Item2).CompareTo(nodeTree.GetDepth(a.Item2)));
-
-                    foreach (var child in nodeList)
-                    {
-                        var tokensHere = child.Item2.getSourceInterval();
-                        var length = text.Length;
-                        var childText = ""; // text.Substring(tokensHere.a, tokensHere.b - tokensHere.a);
-                        for (int i = tokensHere.a; i < tokensHere.b; i++) {
-                            if (!claimed[i])
-                            {
-                                childText += text[i];
-                            }
-                            claimed[i] = true;
-                        }
-
-                        var index = child.Item1;
-                        if (hashTokens.ContainsKey(index) && hashTokens[index] != childText)
+                        //DebugClass.LogError("REPLACING: " + VbToCsharpPattern.LookupNodeType(child));
+                        var tokens = GetTokens(child);
+                        foreach (var token in tokens)
                         {
                             if (letterIndex < letters.Length)
                             {
-                                hashTokens[index] = letters[letterIndex++].ToString(System.Globalization.CultureInfo.InvariantCulture);
-                            } else
-                            {
-                                hashTokens[index] = "*";
+                                var oldPattern = pattern;
+                                pattern = pattern.Replace(token, letters[letterIndex].ToString(System.Globalization.CultureInfo.InvariantCulture));
+                                if (pattern != oldPattern)
+                                {
+                                    letterIndex++;
+                                }
+                                //DebugClass.LogError("REPLACING: " + token);
                             }
-                        } else
+                            
+                            if (letterIndex >= letters.Length)
+                            {
+                                break;
+                            }
+                        }
+                        if (letterIndex >= letters.Length)
                         {
-                            hashTokens[index] = childText;
+                            break;
                         }
                     }
                 }
-
-                var hashTokensList = new List<Tuple<int, string>>();
-                foreach (var tk in hashTokens)
+                if (pattern.Length >= 100)
                 {
-                    hashTokensList.Add(Tuple.Create(tk.Key, tk.Value));
+                    pattern = "PATTERN TOO LONG";
                 }
-                hashTokensList.Sort((a, b) => a.Item1.CompareTo(b.Item1));
-                generatedPatterns[key] = String.Join(" ", hashTokensList.Select(x => x.Item2));
+                generatedPatterns[node] = pattern;
             }
         }
 
