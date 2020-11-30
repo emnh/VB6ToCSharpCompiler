@@ -10,15 +10,21 @@ namespace VB6ToCSharpCompiler
     public enum ContextNodeType
     {
         AmbiguousIdentifierContext,
+        AmbiguousKeywordContext,
         AppActivateStmtContext,
         ArgCallContext,
         ArgContext,
         ArgDefaultValueContext,
+        ArgListContext,
         ArgsCallContext,
         AsTypeClauseContext,
         AttributeStmtContext,
+        BaseTypeContext,
         BeepStmtContext,
+        BlockContext,
         BlockIfThenElseContext,
+        BlockStmtContext,
+        callContext,
         CallContext,
         CaseCondElseContext,
         CaseCondExprContext,
@@ -29,8 +35,19 @@ namespace VB6ToCSharpCompiler
         ChDirStmtContext,
         ChDriveStmtContext,
         CloseStmtContext,
+        ComparisonOperatorContext,
+        ComplexTypeContext,
+        condExprContext,
         ConstStmtContext,
+        constSubStmtContext,
         ConstSubStmtContext,
+        ControlPropertiesContext,
+        Cp_ControlIdentifierContext,
+        Cp_ControlTypeContext,
+        Cp_NestedPropertyContext,
+        Cp_PropertiesContext,
+        Cp_PropertyValueContext,
+        Cp_SinglePropertyContext,
         DateStmtContext,
         DeclareStmtContext,
         DeftypeStmtContext,
@@ -39,14 +56,20 @@ namespace VB6ToCSharpCompiler
         DoLoopStmtContext,
         ECS_MemberProcedureCallContext,
         ECS_ProcedureCallContext,
-        EnumerationStmtContext,
+        EndStmtContext,
         EnumerationStmt_ConstantContext,
+        EnumerationStmtContext,
+        EraseStmtContext,
         EventStmtContext,
         ExitStmtContext,
         ExplicitCallStmtContext,
+        FieldLengthContext,
+        FilecopyStmtContext,
         ForEachStmtContext,
         ForNextStmtContext,
         FunctionStmtContext,
+        GetStmtContext,
+        GoToStmtContext,
         ICS_B_MemberProcedureCallContext,
         ICS_B_ProcedureCallContext,
         ICS_S_DictionaryCallContext,
@@ -57,23 +80,41 @@ namespace VB6ToCSharpCompiler
         IfBlockStmtContext,
         IfConditionStmtContext,
         IfElseBlockStmtContext,
+        ifElseIfBlockStmtContext,
         IfElseIfBlockStmtContext,
         ImplicitCallStmt_InBlockContext,
         ImplicitCallStmt_InStmtContext,
         InlineIfThenElseContext,
+        KillStmtContext,
         LetStmtContext,
         LetterrangeContext,
+        LineInputStmtContext,
         LineLabelContext,
         LiteralContext,
+        LsetStmtContext,
+        memberCallContext,
+        MkdirStmtContext,
+        ModuleAttributesContext,
+        ModuleBlockContext,
+        ModuleBodyContext,
+        ModuleBodyElementContext,
         ModuleConfigElementContext,
         ModuleContext,
         ModuleHeaderContext,
+        ModuleOptionsContext,
+        ModuleReferenceComponentContext,
+        ModuleReferenceContext,
+        ModuleReferencesContext,
+        ModuleReferenceValueContext,
+        NameStmtContext,
         OnErrorStmtContext,
         OpenStmtContext,
         OptionBaseStmtContext,
         OptionCompareStmtContext,
         OptionExplicitStmtContext,
         OptionPrivateModuleStmtContext,
+        OutputList_ExpressionContext,
+        OutputListContext,
         ParserRuleContext,
         PrintStmtContext,
         PropertyGetStmtContext,
@@ -81,22 +122,30 @@ namespace VB6ToCSharpCompiler
         PropertySetStmtContext,
         PublicPrivateGlobalVisibilityContext,
         PublicPrivateVisibilityContext,
+        PutStmtContext,
         RedimSubStmtContext,
         ResumeStmtContext,
+        SaveSettingStmtContext,
         SC_CaseContext,
         SC_CondContext,
+        sc_CondExprContext,
         SC_CondExprContext,
-        SaveSettingStmtContext,
         SelectCaseStmtContext,
         SetStmtContext,
         StartRuleContext,
+        SubscriptContext,
+        SubscriptsContext,
         SubStmtContext,
+        TypeContext,
         TypeHintContext,
-        TypeStmtContext,
+        TypeOfStmtContext,
         TypeStmt_ElementContext,
+        TypeStmtContext,
+        UnloadStmtContext,
         ValueStmtContext,
         VariableListStmtContext,
         VariableStmtContext,
+        variableSubStmtContext,
         VariableSubStmtContext,
         VisibilityContext,
         VsAddContext,
@@ -133,152 +182,10 @@ namespace VB6ToCSharpCompiler
         WhileWendStmtContext,
         WithStmtContext,
         WriteStmtContext,
-        callContext,
-        condExprContext,
-        constSubStmtContext,
-        ifElseIfBlockStmtContext,
-        memberCallContext,
-        sc_CondExprContext,
-        variableSubStmtContext
     }
 #pragma warning restore CA1707 // Identifiers should not contain underscores
 
     public static class NodeContexts
     {
-        public static string[] GetContexts()
-        {
-            return @"
-AmbiguousIdentifierContext
-AppActivateStmtContext
-ArgCallContext
-ArgContext
-ArgDefaultValueContext
-ArgsCallContext
-AsTypeClauseContext
-AttributeStmtContext
-BeepStmtContext
-BlockIfThenElseContext
-CallContext
-CaseCondElseContext
-CaseCondExprContext
-CaseCondExprIsContext
-CaseCondExprToContext
-CaseCondExprValueContext
-CertainIdentifierContext
-ChDirStmtContext
-ChDriveStmtContext
-CloseStmtContext
-ConstStmtContext
-ConstSubStmtContext
-DateStmtContext
-DeclareStmtContext
-DeftypeStmtContext
-DeleteSettingStmtContext
-DictionaryCallStmtContext
-DoLoopStmtContext
-ECS_MemberProcedureCallContext
-ECS_ProcedureCallContext
-EnumerationStmtContext
-EnumerationStmt_ConstantContext
-EventStmtContext
-ExitStmtContext
-ExplicitCallStmtContext
-ForEachStmtContext
-ForNextStmtContext
-FunctionStmtContext
-ICS_B_MemberProcedureCallContext
-ICS_B_ProcedureCallContext
-ICS_S_DictionaryCallContext
-ICS_S_MemberCallContext
-ICS_S_MembersCallContext
-ICS_S_ProcedureOrArrayCallContext
-ICS_S_VariableOrProcedureCallContext
-IfBlockStmtContext
-IfConditionStmtContext
-IfElseBlockStmtContext
-IfElseIfBlockStmtContext
-ImplicitCallStmt_InBlockContext
-ImplicitCallStmt_InStmtContext
-InlineIfThenElseContext
-LetStmtContext
-LetterrangeContext
-LineLabelContext
-LiteralContext
-ModuleConfigElementContext
-ModuleContext
-ModuleHeaderContext
-OnErrorStmtContext
-OpenStmtContext
-OptionBaseStmtContext
-OptionCompareStmtContext
-OptionExplicitStmtContext
-OptionPrivateModuleStmtContext
-ParserRuleContext
-PrintStmtContext
-PropertyGetStmtContext
-PropertyLetStmtContext
-PropertySetStmtContext
-PublicPrivateGlobalVisibilityContext
-PublicPrivateVisibilityContext
-RedimSubStmtContext
-ResumeStmtContext
-SC_CaseContext
-SC_CondContext
-SC_CondExprContext
-SaveSettingStmtContext
-SelectCaseStmtContext
-SetStmtContext
-StartRuleContext
-SubStmtContext
-TypeHintContext
-TypeStmtContext
-TypeStmt_ElementContext
-ValueStmtContext
-VariableListStmtContext
-VariableStmtContext
-VariableSubStmtContext
-VisibilityContext
-VsAddContext
-VsAddressOfContext
-VsAmpContext
-VsAndContext
-VsAssignContext
-VsDivContext
-VsEqContext
-VsEqvContext
-VsGeqContext
-VsGtContext
-VsICSContext
-VsImpContext
-VsIsContext
-VsLeqContext
-VsLikeContext
-VsLiteralContext
-VsLtContext
-VsMidContext
-VsMinusContext
-VsModContext
-VsMultContext
-VsNegationContext
-VsNeqContext
-VsNewContext
-VsNotContext
-VsOrContext
-VsPlusContext
-VsPowContext
-VsStructContext
-VsTypeOfContext
-VsXorContext
-WhileWendStmtContext
-WithStmtContext
-WriteStmtContext
-callContext
-condExprContext
-constSubStmtContext
-ifElseIfBlockStmtContext
-memberCallContext
-sc_CondExprContext
-variableSubStmtContext".Split('\n');
-        }
     }
 }

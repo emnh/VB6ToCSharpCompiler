@@ -2,9 +2,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace VB6ToCSharpCompiler
 {
@@ -67,6 +65,47 @@ namespace VB6ToCSharpCompiler
             }
         }
 
+        public static string GetCls(string typeName)
+        {
+            string outString = @"
+using org.antlr.v4.runtime.tree;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace VB6ToCSharpCompiler.VB6NodeTranslatorLogging
+{
+public class $TYPE : VB6NodeTranslator
+{
+    public $TYPE(VB6NodeTree nodeTree, Dictionary<ContextNodeType, VB6NodeTranslator> translatorDict) : base(nodeTree, translatorDict)
+    {
+    }
+
+    public override ContextNodeType GetNodeContextType()
+    {
+        return ContextNodeType.$TYPE;
+    }
+
+    public override IEnumerable<string> PreTranslate(List<ParseTree> parseTrees)
+    {
+        return new List<string>();
+    }
+        
+    public override IEnumerable<string> PostTranslate(List<ParseTree> parseTrees)
+    {
+        return new List<string>();
+    }
+}
+}
+";
+            
+            outString = outString.Replace("$TYPE", typeName).Replace("$TYPE", typeName).Replace("$TYPE", typeName);
+            //outString = outString.Replace("$BODY", cm + yr);
+            return outString;
+        }
+
         public static void GetCode(VB6NodeTree nodeTree)
         {
             const string genFolder = @"F:\emh-dev\VB6ToCSharpCompiler\VB6ToCSharpCompiler\VB6NodeTranslatorLogging";
@@ -94,13 +133,14 @@ namespace VB6ToCSharpCompiler
                 foreach (var child in nodeTree.GetChildren(node))
                 {
                     var tokens = String.Join(" ", GetTokens(child));
-                    if (!string.IsNullOrEmpty(tokens))
-                    {
-                        children = children.Add(tokens);
-                    } else
-                    {
-                        children = children.Add(GetNodeHash(child));
-                    }
+                    //if (!string.IsNullOrEmpty(tokens))
+                    //{
+                    //    children = children.Add("\"" + tokens + "\"");
+                    //} else
+                    //{
+                        
+                    //}
+                    children = children.Add(GetNodeHash(child));
                 }
                 
                 if (!nodeTypeDict[nodeHash].ContainsKey(children))
@@ -110,30 +150,26 @@ namespace VB6ToCSharpCompiler
                 nodeTypeDict[nodeHash][children].Add(subtree);
             }
 
+            var hasContexts = new Dictionary<string, bool>();
+            foreach (ContextNodeType contextNodeType in (ContextNodeType[]) Enum.GetValues(typeof(ContextNodeType)))
+            {
+                var typeName = contextNodeType.ToString("F");
+                var fileName = typeName + ".cs";
+                var outString = GetCls(typeName);
+                hasContexts[typeName] = true;
+                System.IO.File.WriteAllText(Path.Combine(genFolder, fileName), outString);
+            }
             foreach (var key in nodeTypeDict.Keys)
             {
                 var typeName = key;
-                var value = nodeTypeDict[key];
-
-                var cm = "";
-                var index = 0;
-                var yr = "";
-                foreach (var key2 in value)
+                if (!hasContexts.ContainsKey(typeName))
                 {
-                    cm += "// " + key2 + "\r\n";
-                    yr += "yield return parseTrees[$INDEX]".Replace("$INDEX", index.ToString(System.Globalization.CultureInfo.InvariantCulture)) + "\r\n";
-                    index++;
+                    DebugClass.LogError(typeName + ",");
+                    hasContexts[typeName] = true;
                 }
-                
-
-                string outString = @"
-$TYPE
-$BODY
-";
-                outString = outString.Replace("$TYPE", typeName);
-                outString = outString.Replace("$BODY", cm + yr);
-                
-                DebugClass.LogError(outString);
+                var fileName = typeName + ".cs";
+                var outString = GetCls(typeName);
+                System.IO.File.WriteAllText(Path.Combine(genFolder, fileName), outString);
             }
         }
 
@@ -144,6 +180,7 @@ $BODY
                 throw new ArgumentNullException(nameof(nodeTree));
             }
 
+            // TODO: Move elsewhere
             GetCode(nodeTree);
 
             // Iterate over all nodes and add them to node hash based on their concatenated type strings

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,7 +25,6 @@ namespace VB6ToCSharpCompiler
         private void btnConvert_Click(object sender, EventArgs e)
         {
             var fileName = (string) lstFileNames.SelectedItem;
-
 
             var compileResult = VB6Compiler.Compile(fileName);
             txtVBCode.Text = compileResult.VBCode;
@@ -83,6 +83,21 @@ namespace VB6ToCSharpCompiler
                 }
             }
             ShowFiles();
+        }
+
+        private void btnGenerate_Click(object sender, EventArgs e)
+        {
+            foreach (var fileName in VB6Compiler.GetFiles(Folder))
+            {
+                if (fileName.EndsWith(".frx", true, CultureInfo.CurrentCulture))
+                {
+                    //DebugClass.LogError("Unsupported file type: FRX");
+                    continue;
+                }
+                var compileResult = VB6Compiler.Compile(fileName, null, false);
+                var tree = new VB6NodeTree(compileResult);
+                ASTPatternGenerator.GetCode(tree);
+            }
         }
     }
 }

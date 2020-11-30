@@ -37,6 +37,7 @@
             this.btnBrowseVB6AST = new System.Windows.Forms.Button();
             this.btnPatterns = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.btnGenerate = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lstFileNames
@@ -112,11 +113,24 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // btnGenerate
+            // 
+            this.btnGenerate.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(7)))), ((int)(((byte)(208)))));
+            this.btnGenerate.Location = new System.Drawing.Point(729, 749);
+            this.btnGenerate.Margin = new System.Windows.Forms.Padding(4);
+            this.btnGenerate.Name = "btnGenerate";
+            this.btnGenerate.Size = new System.Drawing.Size(171, 68);
+            this.btnGenerate.TabIndex = 13;
+            this.btnGenerate.Text = "Generate Classes";
+            this.btnGenerate.UseVisualStyleBackColor = false;
+            this.btnGenerate.Click += new System.EventHandler(this.btnGenerate_Click);
+            // 
             // frmCompiler
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1752, 1116);
+            this.Controls.Add(this.btnGenerate);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.btnPatterns);
             this.Controls.Add(this.btnBrowseVB6AST);
@@ -142,6 +156,7 @@
         private System.Windows.Forms.Button btnBrowseVB6AST;
         private System.Windows.Forms.Button btnPatterns;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btnGenerate;
     }
 }
 
