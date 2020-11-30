@@ -107,7 +107,7 @@ namespace VB6ToCSharpCompiler
                 var s = String.Join("", sl);
                 var bname = Path.GetFileName(fileName);
                 System.IO.Directory.CreateDirectory(outFolder);
-                System.IO.File.WriteAllText(Path.Combine(outFolder, bname), s);
+                System.IO.File.WriteAllText(Path.Combine(outFolder, bname), s, Encoding.GetEncoding(1252));
             }
 
             string message = "Wrote new files to: " + outFolder;

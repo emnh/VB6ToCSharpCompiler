@@ -34,6 +34,27 @@ namespace VB6ToCSharpCompiler
             return typeName;
         }
 
+        public static IEnumerable<string> GetTokens(ParseTree node)
+        {
+            if (node == null)
+            {
+                throw new ArgumentNullException(nameof(node));
+            }
+
+            for (int i = 0; i < node.getChildCount(); i++)
+            {
+                var child = node.getChild(i);
+                var text = child.getText();
+                if (text.Length > 0)
+                {
+                    if (child is TerminalNodeImpl)
+                    {
+                        yield return ((TerminalNodeImpl)child).getSymbol().getText();
+                    }
+                }
+            }
+        }
+
         public IEnumerable<string> UniversalTranslate(ParseTree node)
         {
             if (node == null)
@@ -48,7 +69,15 @@ namespace VB6ToCSharpCompiler
             foreach (var child in translator.Translate(nodeTree.GetChildren(node)))
             {
                 yield return child;
-            };
+            }
+            foreach (var token in GetTokens(node))
+            {
+                yield return token;
+            }
+            //foreach (var child in nodeTree.GetChildren(node))
+            //{
+                
+            //}
         }
 
         public IEnumerable<string> UniversalTranslate(List<ParseTree> parseTrees)
