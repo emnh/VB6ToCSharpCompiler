@@ -157,6 +157,7 @@ namespace VB6ToCSharpCompiler
                 var sl = se.ToList();
                 sl.AddRange(GetComments(compileResult));
                 sl.Sort((a, b) => a.index.CompareTo(b.index));
+                //var s = String.Join("", sl.Select(x => x.index.ToString() + ":" + x.token));
                 var s = String.Join("", sl.Select(x => x.token));
                 var bname = Path.GetFileName(fileName);
                 System.IO.Directory.CreateDirectory(outFolder);

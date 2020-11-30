@@ -8,10 +8,10 @@ namespace VB6ToCSharpCompiler
 {
     public class OutToken
     {
-        public int index { get; set; }  = 0;
+        public double index { get; set; }  = 0;
         public string token { get; set; } = "";
 
-        public OutToken(int index, string token)
+        public OutToken(double index, string token)
         {
             this.index = index;
             this.token = token;

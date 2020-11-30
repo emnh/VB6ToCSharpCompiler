@@ -41,11 +41,23 @@ namespace VB6ToCSharpCompiler.VB6NodeTranslatorLogging
             }
             if (parseTrees.Count > 0)
             {
-                var index = translator.GetFirstOrLastTokenIndex(parseTrees[0]);
+                //var index = 0.0;
+                //foreach (var child in parseTrees)
+                //{
+                //    if (VB6NodeTranslator.GetNodeTypeName(child).Contains("BlockContext"))
+                //    {
+                //        index = translator.GetFirstOrLastTokenIndex(child);
+                //        break;
+                //    }
+                //    //index = translator.GetFirstOrLastTokenIndex(child, true);
+                //}
+                var index = translator.GetFirstOrLastTokenIndex(parseTrees[parseTrees.Count - 1]);
+
                 //DebugClass.LogError("INDEX: " + index);
                 var functionName = GetFunctionName(translator, parseTrees);
 
-                yield return new OutToken(index + 1, @"
+                yield return new OutToken(index - 0.5, @"
+Dim FileNum
 FileNum = FreeFile
 Open App.Path & ""\ProgramLog.txt"" For Append As FileNum
 Print #FileNum, ""ENTER $FUNCTION""
@@ -71,10 +83,18 @@ Close FileNum
             if (parseTrees.Count > 0)
             {
                 var index = translator.GetFirstOrLastTokenIndex(parseTrees[parseTrees.Count - 1], true);
+                //var index = 0;
+                //foreach (var child in parseTrees)
+                //{
+                //    if (VB6NodeTranslator.GetNodeTypeName(child) == "BlockContext")
+                //    {
+                //        index = translator.GetFirstOrLastTokenIndex(child);
+                //    }
+                //}
 
                 var functionName = GetFunctionName(translator, parseTrees);
 
-                yield return new OutToken(index + 1, @"
+                yield return new OutToken(index + 0.5, @"
 FileNum = FreeFile
 Open App.Path & ""\ProgramLog.txt"" For Append As FileNum
 Print #FileNum, ""LEAVE $FUNCTION""

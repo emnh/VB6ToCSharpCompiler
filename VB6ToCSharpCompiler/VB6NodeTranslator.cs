@@ -60,26 +60,29 @@ namespace VB6ToCSharpCompiler
             }
         }
 
-        public int GetFirstOrLastTokenIndex(ParseTree node, bool last = false) {
+        public double GetFirstOrLastTokenIndex(ParseTree node, bool last = false) {
             if (node == null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
 
-            var index = -1;
+            var index = -1.0;
             foreach (var child in new VB6SubTree(nodeTree, node).GetAllNodes())
             {
                 foreach (var token in GetTokens(child))
                 {
                     if (!last)
                     {
-                        return token.index;
+                        index = Math.Min(index < 0.0 ? token.index : index, token.index);
                     } else
                     {
-                        index = token.index;
+                        index = Math.Max(index, token.index);
                     }
-                    
                 }
+            }
+            if (index < 0.0)
+            {
+                throw new ArgumentException(nameof(index));
             }
             return index;
         }
