@@ -38,6 +38,7 @@
             this.btnPatterns = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.btnGenerate = new System.Windows.Forms.Button();
+            this.btnTranslateWithLogging = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lstFileNames
@@ -125,11 +126,24 @@
             this.btnGenerate.UseVisualStyleBackColor = false;
             this.btnGenerate.Click += new System.EventHandler(this.btnGenerate_Click);
             // 
+            // btnTranslateWithLogging
+            // 
+            this.btnTranslateWithLogging.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(7)))), ((int)(((byte)(208)))));
+            this.btnTranslateWithLogging.Location = new System.Drawing.Point(908, 747);
+            this.btnTranslateWithLogging.Margin = new System.Windows.Forms.Padding(4);
+            this.btnTranslateWithLogging.Name = "btnTranslateWithLogging";
+            this.btnTranslateWithLogging.Size = new System.Drawing.Size(171, 68);
+            this.btnTranslateWithLogging.TabIndex = 14;
+            this.btnTranslateWithLogging.Text = "Add Logging";
+            this.btnTranslateWithLogging.UseVisualStyleBackColor = false;
+            this.btnTranslateWithLogging.Click += new System.EventHandler(this.btnTranslateWithLogging_Click);
+            // 
             // frmCompiler
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1752, 1116);
+            this.Controls.Add(this.btnTranslateWithLogging);
             this.Controls.Add(this.btnGenerate);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.btnPatterns);
@@ -157,6 +171,7 @@
         private System.Windows.Forms.Button btnPatterns;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button btnGenerate;
+        private System.Windows.Forms.Button btnTranslateWithLogging;
     }
 }
 

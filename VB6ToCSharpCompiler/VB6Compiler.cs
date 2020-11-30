@@ -20,14 +20,14 @@ namespace VB6ToCSharpCompiler
 {
     public static class VB6Compiler
     {
-        public static IEnumerable<string> GetFiles(string Folder) {
+        public static IEnumerable<string> GetFiles(string Folder, bool includeFRX = false) {
             var files = Directory.GetFiles(Folder);
             foreach (var fileName in files)
             {
                 if (
                     fileName.EndsWith(".bas", System.StringComparison.InvariantCulture) ||
                     fileName.EndsWith(".frm", System.StringComparison.InvariantCulture) ||
-                    fileName.EndsWith(".frx", System.StringComparison.InvariantCulture))
+                    (includeFRX && fileName.EndsWith(".frx", System.StringComparison.InvariantCulture)))
                 {
                     yield return fileName;
                 }

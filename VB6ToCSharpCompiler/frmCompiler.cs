@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -89,15 +90,30 @@ namespace VB6ToCSharpCompiler
         {
             foreach (var fileName in VB6Compiler.GetFiles(Folder))
             {
-                if (fileName.EndsWith(".frx", true, CultureInfo.CurrentCulture))
-                {
-                    //DebugClass.LogError("Unsupported file type: FRX");
-                    continue;
-                }
                 var compileResult = VB6Compiler.Compile(fileName, null, false);
                 var tree = new VB6NodeTree(compileResult);
                 ASTPatternGenerator.GetCode(tree);
             }
+        }
+
+        private void btnTranslateWithLogging_Click(object sender, EventArgs e)
+        {
+            var outFolder = Path.Combine(Folder, "out");
+            foreach (var fileName in VB6Compiler.GetFiles(Folder))
+            {
+                var compileResult = VB6Compiler.Compile(fileName, null, false);
+                var tree = new VB6NodeTree(compileResult);
+                var sl = VB6NodeTranslatorLoader.Translate(tree);
+                var s = String.Join("", sl);
+                var bname = Path.GetFileName(fileName);
+                System.IO.Directory.CreateDirectory(outFolder);
+                System.IO.File.WriteAllText(Path.Combine(outFolder, bname), s);
+            }
+
+            string message = "Wrote new files to: " + outFolder;
+            string caption = "Compilation Successful!";
+            MessageBoxButtons buttons = MessageBoxButtons.OK;
+            var result = MessageBox.Show(message, caption, buttons);
         }
     }
 }
