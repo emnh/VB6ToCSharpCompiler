@@ -141,7 +141,6 @@ namespace VB6ToCSharpCompiler
 
             compileResult.Program = program;
 
-
             var modules = program.getModules();
             
             for (int i = 0; i < modules.size(); i++)

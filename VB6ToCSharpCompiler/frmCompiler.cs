@@ -1,4 +1,9 @@
-﻿using System;
+﻿using io.proleap.vb6;
+using io.proleap.vb6.asg.metamodel.impl;
+using java.io;
+using java.nio.charset;
+using org.antlr.v4.runtime;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -7,6 +12,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -96,19 +102,65 @@ namespace VB6ToCSharpCompiler
             }
         }
 
+        private IEnumerable<OutToken> GetComments(CompileResult result)
+        {
+            var modules = result.Program.getModules();
+
+            for (int mi = 0; mi < modules.size(); mi++)
+            {
+                var module = (ModuleImpl) modules.get(mi);
+                var cts = module.getTokens();
+                var tokens = cts.getTokens();
+                //DebugClass.LogError("TOKENS SIZE: " + tokens.size() + ": " + tokens.get(0));
+                for (int i = 0; i < tokens.size(); i++)
+                {
+                    var token = (Token)tokens.get(i);
+                    //DebugClass.LogError("CHANNEL: " + token.getChannel() + ": " + token.getText());
+                    if (token.getChannel() != 0)
+                    {
+                        //DebugClass.LogError("CHANNEL: " + token.getChannel() + ": " + token.getStartIndex() + ": " + token.getText());
+                        yield return new OutToken(token.getTokenIndex(), token.getText());
+                    }
+                }
+            }
+
+            //var text = System.IO.File.ReadAllText(fileName, Encoding.GetEncoding(1252));
+            ////using (var inputStream = new ByteArrayInputStream(Encoding.GetEncoding(1252).GetBytes(text)))
+            //DebugClass.LogError("TEXT: " + text);
+            //using (var inputStream = new java.io.ByteArrayInputStream(Encoding.GetEncoding(1252).GetBytes(text)))
+            //{
+            //    var charset = Charset.forName("Windows-1252");
+            //    var lexer = new VisualBasic6Lexer(CharStreams.fromStream(inputStream, charset));
+            //    var cts = new CommonTokenStream(lexer);
+            //    var tokens = cts.getTokens();
+            //    DebugClass.LogError("TOKENS SIZE: " + tokens.size() + ": " + tokens.get(0));
+            //    for (int i = 0; i < tokens.size(); i++)
+            //    {
+            //        var token = (Token) tokens.get(i);
+            //        DebugClass.LogError("CHANNEL: " + token.getChannel() + ": " + token.getText());
+            //        if (token.getChannel() == 0)
+            //        {
+            //            yield return new OutToken(token.getStartIndex(), token.getText());
+            //        }
+            //    }
+            //}
+        }
+
         private void btnTranslateWithLogging_Click(object sender, EventArgs e)
         {
-            var outFolder = Path.Combine(Folder, "out");
+            var outFolder = Folder + "-out";
             foreach (var fileName in VB6Compiler.GetFiles(Folder))
             {
                 var compileResult = VB6Compiler.Compile(fileName, null, false);
                 var tree = new VB6NodeTree(compileResult);
                 var se = VB6NodeTranslatorLoader.Translate(tree);
                 var sl = se.ToList();
+                sl.AddRange(GetComments(compileResult));
                 sl.Sort((a, b) => a.index.CompareTo(b.index));
                 var s = String.Join("", sl.Select(x => x.token));
                 var bname = Path.GetFileName(fileName);
                 System.IO.Directory.CreateDirectory(outFolder);
+                s = Regex.Replace(s, "([^\r])\n", "$1\r\n");
                 System.IO.File.WriteAllText(Path.Combine(outFolder, bname), s, Encoding.GetEncoding(1252));
             }
 

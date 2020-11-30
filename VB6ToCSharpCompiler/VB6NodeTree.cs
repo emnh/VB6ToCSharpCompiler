@@ -15,12 +15,14 @@ namespace VB6ToCSharpCompiler
         private Dictionary<ParseTree, List<ParseTree>> children;
         private Dictionary<ParseTree, int> depths;
         private Dictionary<ParseTree, ImmutableList<IndexedPath>> paths;
+        //private Dictionary<ParseTree, ImmutableList<int>> tokenIndices;
 
         public VisitorCallback Init()
         {
             children = new Dictionary<ParseTree, List<ParseTree>>();
             depths = new Dictionary<ParseTree, int>();
             paths = new Dictionary<ParseTree, ImmutableList<IndexedPath>>();
+            //tokenIndices = new Dictionary<ParseTree, ImmutableList<int>>();
 
             return new VisitorCallback()
             {
@@ -71,6 +73,8 @@ namespace VB6ToCSharpCompiler
                         token += "...";
                     }
                     paths[node] = paths[node.getParent()].Add(new IndexedPath(VbToCsharpPattern.LookupNodeType(node), childIndex, token));
+
+
 
                     //for (int i = 0; i < node.getChildCount(); i++)
                     //{

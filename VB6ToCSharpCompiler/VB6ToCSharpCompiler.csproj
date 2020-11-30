@@ -319,6 +319,7 @@
     <Compile Include="VB6NodeTranslatorLogging\LineInputStmtContext.cs" />
     <Compile Include="VB6NodeTranslatorLogging\LineLabelContext.cs" />
     <Compile Include="VB6NodeTranslatorLogging\LiteralContext.cs" />
+    <Compile Include="LoggingFunctionality.cs" />
     <Compile Include="VB6NodeTranslatorLogging\LsetStmtContext.cs" />
     <Compile Include="VB6NodeTranslatorLogging\memberCallContext.cs" />
     <Compile Include="VB6NodeTranslatorLogging\MkdirStmtContext.cs" />

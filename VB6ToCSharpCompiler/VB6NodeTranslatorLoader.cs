@@ -1,4 +1,5 @@
 
+using org.antlr.v4.runtime.tree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -192,7 +193,8 @@ dict[ContextNodeType.WriteStmtContext] = new VB6NodeTranslatorLogging.WriteStmtC
             {
                 throw new ArgumentException("contextNodeType");
             }
-            return dict[contextNodeType].Translate(nodeTree.GetChildren(nodeTree.GetRoot()));
+            //return dict[contextNodeType].Translate(nodeTree.GetChildren(nodeTree.GetRoot()));
+            return dict[contextNodeType].Translate(new List<ParseTree> { nodeTree.GetRoot() });
         }
     }
 }

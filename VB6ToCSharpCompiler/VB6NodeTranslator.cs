@@ -45,15 +45,43 @@ namespace VB6ToCSharpCompiler
             {
                 var child = node.getChild(i);
                 var text = child.getText();
+                
+                //DebugClass.LogError("TEXT: " + child.GetType().Name + ": " + text);
+                
                 if (text.Length > 0)
                 {
                     if (child is TerminalNodeImpl)
                     {
                         var terminal = (TerminalNodeImpl) child;
-                        yield return new OutToken(terminal.getSourceInterval().a, terminal.getSymbol().getText());
+                        //yield return new OutToken(terminal.getSourceInterval().a, terminal.getSymbol().getText());
+                        yield return new OutToken(terminal.getSymbol().getTokenIndex(), terminal.getSymbol().getText());
                     }
                 }
             }
+        }
+
+        public int GetFirstOrLastTokenIndex(ParseTree node, bool last = false) {
+            if (node == null)
+            {
+                throw new ArgumentNullException(nameof(node));
+            }
+
+            var index = -1;
+            foreach (var child in new VB6SubTree(nodeTree, node).GetAllNodes())
+            {
+                foreach (var token in GetTokens(child))
+                {
+                    if (!last)
+                    {
+                        return token.index;
+                    } else
+                    {
+                        index = token.index;
+                    }
+                    
+                }
+            }
+            return index;
         }
 
         public IEnumerable<OutToken> UniversalTranslate(ParseTree node)
