@@ -149,8 +149,48 @@ namespace VB6ToCSharpCompiler
         private void btnTranslateWithLogging_Click(object sender, EventArgs e)
         {
             var outFolder = Folder + "-out";
-            foreach (var fileName in VB6Compiler.GetFiles(Folder))
+            var extraModuleName = "VB6CompilerExtra.bas";
+
+            var extraModule = @"
+Public Sub Log(ByVal Msg As String)
+    Static FileNum As Single
+    If FileNum = 0 Then
+        FileNum = FreeFile
+        Open App.Path & ""\ProgramLog.txt"" For Output As FileNum
+    End If
+    Print #FileNum, Msg
+End Sub
+
+public Sub LogEnter(ByVal FunctionName As String)
+    Log ""ENTER "" & FunctionName
+End Sub
+
+public Sub LogLeave(ByVal FunctionName As String)
+    Log ""LEAVE "" & FunctionName
+End Sub
+";
+
+            System.IO.File.WriteAllText(Path.Combine(outFolder, extraModuleName), extraModule);
+
+            foreach (var fileName in VB6Compiler.GetFiles(Folder, true, true))
             {
+                var bname = Path.GetFileName(fileName);
+                string outFileName = Path.Combine(outFolder, bname);
+                if (
+                    (fileName.EndsWith(".frx", System.StringComparison.InvariantCulture)) ||
+                    (fileName.EndsWith(".vbw", System.StringComparison.InvariantCulture)))
+                {
+                    System.IO.File.Copy(fileName, outFileName, true);
+                    continue;
+                }
+                if (fileName.EndsWith(".vbp", System.StringComparison.InvariantCulture))
+                {
+                    var text = System.IO.File.ReadAllText(fileName, Encoding.GetEncoding(1252));
+                    text += "Module=mod_VB6CompilerExtra; " + extraModuleName + "\r\n";
+                    System.IO.File.WriteAllText(outFileName, text, Encoding.GetEncoding(1252));
+                    continue;
+                }
+
                 var compileResult = VB6Compiler.Compile(fileName, null, false);
                 var tree = new VB6NodeTree(compileResult);
                 var se = VB6NodeTranslatorLoader.Translate(tree);
@@ -159,10 +199,9 @@ namespace VB6ToCSharpCompiler
                 sl.Sort((a, b) => a.index.CompareTo(b.index));
                 //var s = String.Join("", sl.Select(x => x.index.ToString() + ":" + x.token));
                 var s = String.Join("", sl.Select(x => x.token));
-                var bname = Path.GetFileName(fileName);
                 System.IO.Directory.CreateDirectory(outFolder);
                 s = Regex.Replace(s, "([^\r])\n", "$1\r\n");
-                System.IO.File.WriteAllText(Path.Combine(outFolder, bname), s, Encoding.GetEncoding(1252));
+                System.IO.File.WriteAllText(outFileName, s, Encoding.GetEncoding(1252));
             }
 
             string message = "Wrote new files to: " + outFolder;

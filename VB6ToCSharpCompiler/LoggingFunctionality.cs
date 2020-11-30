@@ -57,11 +57,12 @@ namespace VB6ToCSharpCompiler.VB6NodeTranslatorLogging
                 var functionName = GetFunctionName(translator, parseTrees);
 
                 yield return new OutToken(index - 0.5, @"
-Dim FileNum
-FileNum = FreeFile
-Open App.Path & ""\ProgramLog.txt"" For Append As FileNum
-Print #FileNum, ""ENTER $FUNCTION""
-Close FileNum
+'Dim FileNum
+'FileNum = FreeFile
+'Open App.Path & ""\ProgramLog.txt"" For Append As FileNum
+'Print #FileNum, ""ENTER $FUNCTION""
+'Close FileNum
+LogEnter ""$FUNCTION""
 ".Replace("$FUNCTION", functionName));
             }
             else
@@ -95,10 +96,12 @@ Close FileNum
                 var functionName = GetFunctionName(translator, parseTrees);
 
                 yield return new OutToken(index + 0.5, @"
-FileNum = FreeFile
-Open App.Path & ""\ProgramLog.txt"" For Append As FileNum
-Print #FileNum, ""LEAVE $FUNCTION""
-Close FileNum
+'Dim FileNum
+'FileNum = FreeFile
+'Open App.Path & ""\ProgramLog.txt"" For Append As FileNum
+'Print #FileNum, ""ENTER $FUNCTION""
+'Close FileNum
+LogLeave ""$FUNCTION""
 ".Replace("$FUNCTION", functionName));
             }
             else
