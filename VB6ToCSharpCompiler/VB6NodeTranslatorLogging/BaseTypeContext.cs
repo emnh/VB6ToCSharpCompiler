@@ -19,14 +19,14 @@ public class BaseTypeContext : VB6NodeTranslator
         return ContextNodeType.BaseTypeContext;
     }
 
-    public override IEnumerable<string> PreTranslate(List<ParseTree> parseTrees)
+    public override IEnumerable<OutToken> PreTranslate(List<ParseTree> parseTrees)
     {
-        return new List<string>();
+        return new List<OutToken>();
     }
         
-    public override IEnumerable<string> PostTranslate(List<ParseTree> parseTrees)
+    public override IEnumerable<OutToken> PostTranslate(List<ParseTree> parseTrees)
     {
-        return new List<string>();
+        return new List<OutToken>();
     }
 }
 }

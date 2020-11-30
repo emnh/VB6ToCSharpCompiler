@@ -34,7 +34,7 @@ namespace VB6ToCSharpCompiler
             return typeName;
         }
 
-        public static IEnumerable<string> GetTokens(ParseTree node)
+        public static IEnumerable<OutToken> GetTokens(ParseTree node)
         {
             if (node == null)
             {
@@ -49,13 +49,14 @@ namespace VB6ToCSharpCompiler
                 {
                     if (child is TerminalNodeImpl)
                     {
-                        yield return ((TerminalNodeImpl)child).getSymbol().getText();
+                        var terminal = (TerminalNodeImpl) child;
+                        yield return new OutToken(terminal.getSourceInterval().a, terminal.getSymbol().getText());
                     }
                 }
             }
         }
 
-        public IEnumerable<string> UniversalTranslate(ParseTree node)
+        public IEnumerable<OutToken> UniversalTranslate(ParseTree node)
         {
             if (node == null)
             {
@@ -74,13 +75,9 @@ namespace VB6ToCSharpCompiler
             {
                 yield return token;
             }
-            //foreach (var child in nodeTree.GetChildren(node))
-            //{
-                
-            //}
         }
 
-        public IEnumerable<string> UniversalTranslate(List<ParseTree> parseTrees)
+        public IEnumerable<OutToken> UniversalTranslate(List<ParseTree> parseTrees)
         {
             if (parseTrees == null)
             {
@@ -96,17 +93,17 @@ namespace VB6ToCSharpCompiler
             }
         }
 
-        public virtual IEnumerable<string> PreTranslate(List<ParseTree> parseTrees)
+        public virtual IEnumerable<OutToken> PreTranslate(List<ParseTree> parseTrees)
         {
-            return new List<string>();
+            return new List<OutToken>();
         }
 
-        public virtual IEnumerable<string> PostTranslate(List<ParseTree> parseTrees)
+        public virtual IEnumerable<OutToken> PostTranslate(List<ParseTree> parseTrees)
         {
-            return new List<string>();
+            return new List<OutToken>();
         }
 
-        public virtual IEnumerable<string> Translate(List<ParseTree> parseTrees)
+        public virtual IEnumerable<OutToken> Translate(List<ParseTree> parseTrees)
         {
             foreach (var child in PreTranslate(parseTrees))
             {

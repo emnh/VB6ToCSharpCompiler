@@ -236,6 +236,7 @@
     </Compile>
     <Compile Include="IndexedPath.cs" />
     <Compile Include="JavaUtil.cs" />
+    <Compile Include="OutToken.cs" />
     <Compile Include="TranslatorForForm.cs" />
     <Compile Include="VB6NodeTranslator.cs" />
     <Compile Include="VB6NodeTranslatorLoader.cs" />

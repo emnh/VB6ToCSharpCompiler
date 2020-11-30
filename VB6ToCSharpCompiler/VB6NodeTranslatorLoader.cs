@@ -9,7 +9,7 @@ namespace VB6ToCSharpCompiler
 {
     public static class VB6NodeTranslatorLoader
     {
-        public static IEnumerable<string> Translate(VB6NodeTree nodeTree) {
+        public static IEnumerable<OutToken> Translate(VB6NodeTree nodeTree) {
             if (nodeTree == null)
             {
                 throw new ArgumentNullException(nameof(nodeTree));

@@ -103,8 +103,10 @@ namespace VB6ToCSharpCompiler
             {
                 var compileResult = VB6Compiler.Compile(fileName, null, false);
                 var tree = new VB6NodeTree(compileResult);
-                var sl = VB6NodeTranslatorLoader.Translate(tree);
-                var s = String.Join("", sl);
+                var se = VB6NodeTranslatorLoader.Translate(tree);
+                var sl = se.ToList();
+                sl.Sort((a, b) => a.index.CompareTo(b.index));
+                var s = String.Join("", sl.Select(x => x.token));
                 var bname = Path.GetFileName(fileName);
                 System.IO.Directory.CreateDirectory(outFolder);
                 System.IO.File.WriteAllText(Path.Combine(outFolder, bname), s, Encoding.GetEncoding(1252));
