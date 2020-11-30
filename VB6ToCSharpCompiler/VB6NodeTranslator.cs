@@ -20,13 +20,27 @@ namespace VB6ToCSharpCompiler
             this.translatorDict = translatorDict;
         }
 
+        public static string GetNodeTypeName(ParseTree node)
+        {
+            if (node == null)
+            {
+                throw new ArgumentNullException(nameof(node));
+            }
+            var typeName = node.GetType().Name;
+            typeName =
+                    typeName[0]
+                        .ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        .ToUpper(System.Globalization.CultureInfo.InvariantCulture) + typeName.Substring(1);
+            return typeName;
+        }
+
         public IEnumerable<string> UniversalTranslate(ParseTree node)
         {
             if (node == null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
-            if (!Enum.TryParse(node.GetType().Name, out ContextNodeType contextNodeType))
+            if (!Enum.TryParse(GetNodeTypeName(node), out ContextNodeType contextNodeType))
             {
                 throw new ArgumentException("contextNodeType");
             }

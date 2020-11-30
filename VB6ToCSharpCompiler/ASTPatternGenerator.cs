@@ -116,7 +116,9 @@ public class $TYPE : VB6NodeTranslator
             {
                 throw new ArgumentNullException(nameof(nodeTree));
             }
+
             // Iterate over all nodes and add them to node hash based on their concatenated type strings
+            var assignments = new List<string>();
             foreach (var node in nodeTree.GetAllNodes())
             {
                 var subtree = new VB6SubTree(nodeTree, node);
@@ -151,26 +153,70 @@ public class $TYPE : VB6NodeTranslator
             }
 
             var hasContexts = new Dictionary<string, bool>();
-            foreach (ContextNodeType contextNodeType in (ContextNodeType[]) Enum.GetValues(typeof(ContextNodeType)))
+            foreach (ContextNodeType contextNodeType in (ContextNodeType[])Enum.GetValues(typeof(ContextNodeType)))
             {
                 var typeName = contextNodeType.ToString("F");
                 var fileName = typeName + ".cs";
                 var outString = GetCls(typeName);
                 hasContexts[typeName] = true;
                 System.IO.File.WriteAllText(Path.Combine(genFolder, fileName), outString);
+
+                typeName = 
+                    typeName[0]
+                        .ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        .ToUpper(System.Globalization.CultureInfo.InvariantCulture) + typeName.Substring(1);
+                var assignment =
+                    "dict[ContextNodeType.$TYPE] = new VB6NodeTranslatorLogging.$TYPE(nodeTree, dict);\r\n"
+                        .Replace("$TYPE", typeName).Replace("$TYPE", typeName);
+                assignments.Add(assignment);
             }
-            foreach (var key in nodeTypeDict.Keys)
+
+            var mainClass = @"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace VB6ToCSharpCompiler
+{
+    public static class VB6NodeTranslatorLoader
+    {
+        public static IEnumerable<string> Translate(VB6NodeTree nodeTree) {
+            if (nodeTree == null)
             {
-                var typeName = key;
-                if (!hasContexts.ContainsKey(typeName))
-                {
-                    DebugClass.LogError(typeName + ",");
-                    hasContexts[typeName] = true;
-                }
-                var fileName = typeName + ".cs";
-                var outString = GetCls(typeName);
-                System.IO.File.WriteAllText(Path.Combine(genFolder, fileName), outString);
+                throw new ArgumentNullException(nameof(nodeTree));
             }
+
+            var dict = new Dictionary<ContextNodeType, VB6NodeTranslator>();
+            
+            // dict[ContextNodeType.AmbiguousIdentifierContext] = new VB6NodeTranslatorLogging.AmbiguousIdentifierContext(nodeTree, dict);
+            $ASSIGNMENTS
+            
+            if (!Enum.TryParse(nodeTree.GetRoot().GetType().Name, out ContextNodeType contextNodeType))
+            {
+                throw new ArgumentException(""contextNodeType"");
+            }
+            return dict[contextNodeType].Translate(nodeTree.GetChildren(nodeTree.GetRoot()));
+        }
+    }
+}
+";
+            mainClass = mainClass.Replace("$ASSIGNMENTS", String.Join("", assignments));
+            System.IO.File.WriteAllText(Path.Combine(genFolder, "../VB6NodeTranslatorLoader.cs"), mainClass);
+
+            //foreach (var key in nodeTypeDict.Keys)
+            //{
+            //    var typeName = key;
+            //    if (!hasContexts.ContainsKey(typeName))
+            //    {
+            //        DebugClass.LogError(typeName + ",");
+            //        hasContexts[typeName] = true;
+            //    }
+            //    var fileName = typeName + ".cs";
+            //    var outString = GetCls(typeName);
+            //    System.IO.File.WriteAllText(Path.Combine(genFolder, fileName), outString);
+            //}
         }
 
         public void GetPatterns(VB6NodeTree nodeTree)

@@ -238,6 +238,7 @@
     <Compile Include="JavaUtil.cs" />
     <Compile Include="TranslatorForForm.cs" />
     <Compile Include="VB6NodeTranslator.cs" />
+    <Compile Include="VB6NodeTranslatorLoader.cs" />
     <Compile Include="VB6NodeTranslatorLogging\AmbiguousIdentifierContext.cs" />
     <Compile Include="VB6NodeTranslatorLogging\AmbiguousKeywordContext.cs" />
     <Compile Include="VB6NodeTranslatorLogging\AppActivateStmtContext.cs" />

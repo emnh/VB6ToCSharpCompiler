@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 
 namespace VB6ToCSharpCompiler.VB6NodeTranslatorLogging
 {
-public class memberCallContext : VB6NodeTranslator
+public class CondExprContext : VB6NodeTranslator
 {
-    public memberCallContext(VB6NodeTree nodeTree, Dictionary<ContextNodeType, VB6NodeTranslator> translatorDict) : base(nodeTree, translatorDict)
+    public CondExprContext(VB6NodeTree nodeTree, Dictionary<ContextNodeType, VB6NodeTranslator> translatorDict) : base(nodeTree, translatorDict)
     {
     }
 
     public override ContextNodeType GetNodeContextType()
     {
-        return ContextNodeType.memberCallContext;
+        return ContextNodeType.CondExprContext;
     }
 
     public override IEnumerable<string> PreTranslate(List<ParseTree> parseTrees)
