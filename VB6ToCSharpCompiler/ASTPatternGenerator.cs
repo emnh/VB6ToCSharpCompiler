@@ -180,9 +180,6 @@ public class $TYPE : VB6NodeTranslator
                 throw new ArgumentNullException(nameof(nodeTree));
             }
 
-            // TODO: Move elsewhere
-            GetCode(nodeTree);
-
             // Iterate over all nodes and add them to node hash based on their concatenated type strings
             foreach (var node in nodeTree.GetAllNodes())
             {
