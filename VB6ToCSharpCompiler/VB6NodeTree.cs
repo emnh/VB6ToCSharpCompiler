@@ -12,6 +12,9 @@ namespace VB6ToCSharpCompiler
 
     public class VB6NodeTree
     {
+        // TODO: wrong location for this functionality, but convenient
+        public Action<string, string> AddExtraModule { get; set; }
+
         private Dictionary<ParseTree, List<ParseTree>> children;
         private Dictionary<ParseTree, int> depths;
         private Dictionary<ParseTree, ImmutableList<IndexedPath>> paths;
@@ -148,6 +151,12 @@ namespace VB6ToCSharpCompiler
             }
 
             throw new InvalidOperationException("No such node: " + node.GetHashCode());
+        }
+
+        public void AppendExtra(string name, string extra)
+        {
+            DebugClass.LogError(extra);
+            AddExtraModule?.Invoke(name, extra);
         }
     }
 }

@@ -9,7 +9,7 @@ namespace VB6ToCSharpCompiler
 {
     public abstract class VB6NodeTranslator {
         public Dictionary<ContextNodeType, VB6NodeTranslator> translatorDict { get;  }
-        
+
         public VB6NodeTree nodeTree { get; }
 
         public abstract ContextNodeType GetNodeContextType();
@@ -149,5 +149,7 @@ namespace VB6ToCSharpCompiler
                 yield return child;
             }
         }
+        
+        
     }
 }

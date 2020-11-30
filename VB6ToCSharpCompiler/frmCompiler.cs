@@ -161,17 +161,56 @@ Public Sub Log(ByVal Msg As String)
     Print #FileNum, Msg
 End Sub
 
-public Sub LogEnter(ByVal FunctionName As String)
-    Log ""ENTER "" & FunctionName
+Public Sub LogEnter(ParamArray Text() As Variant)
+    Dim intLoopIndex As Integer, Serialized As String
+    Serialized = """"
+    For intLoopIndex = 0 To UBound(Text)
+      Serialized = Serialized & Text(intLoopIndex)
+    Next intLoopIndex
+    Log ""ENTER "" & Serialized
 End Sub
 
-public Sub LogLeave(ByVal FunctionName As String)
-    Log ""LEAVE "" & FunctionName
+Public Sub LogLeave(ParamArray Text() As Variant)
+    Dim intLoopIndex As Integer, Serialized As String
+    Serialized = """"
+    For intLoopIndex = 0 To UBound(Text)
+      Serialized = Serialized & Text(intLoopIndex)
+    Next intLoopIndex
+    Log ""LEAVE "" & Serialized
 End Sub
+
+Public Function SerializeInteger(arg as Integer) as String
+    SerializeInteger = CStr(arg)
+End Function
+
+Public Function SerializeDouble(arg as Double) as String
+    SerializeDouble = CStr(arg)
+End Function
+
+Public Function SerializeSingle(arg as Single) as String
+    SerializeSingle = CStr(arg)
+End Function
+
+Public Function SerializeBoolean(arg as Boolean) as String
+    If arg Then
+        SerializeBoolean = ""True""
+    Else
+        SerializeBoolean = ""False""
+    End If
+End Function
+
+Public Function SerializeForm(arg as Form) as String
+    SerializeForm = arg.Name
+End Function
+
+Public Function SerializeString(arg As String) As String
+    SerializeString = arg
+End Function
+
+Public Function SerializeDate(arg As Date) As String
+    SerializeDate = CStr(arg)
+End Function
 ";
-
-            System.IO.File.WriteAllText(Path.Combine(outFolder, extraModuleName), extraModule);
-
             foreach (var fileName in VB6Compiler.GetFiles(Folder, true, true))
             {
                 var bname = Path.GetFileName(fileName);
@@ -193,6 +232,10 @@ End Sub
 
                 var compileResult = VB6Compiler.Compile(fileName, null, false);
                 var tree = new VB6NodeTree(compileResult);
+                tree.AddExtraModule = (a, b) =>
+                {
+                    extraModule += b;
+                };
                 var se = VB6NodeTranslatorLoader.Translate(tree);
                 var sl = se.ToList();
                 sl.AddRange(GetComments(compileResult));
@@ -203,6 +246,8 @@ End Sub
                 s = Regex.Replace(s, "([^\r])\n", "$1\r\n");
                 System.IO.File.WriteAllText(outFileName, s, Encoding.GetEncoding(1252));
             }
+
+            System.IO.File.WriteAllText(Path.Combine(outFolder, extraModuleName), extraModule, Encoding.GetEncoding(1252));
 
             string message = "Wrote new files to: " + outFolder;
             string caption = "Compilation Successful!";

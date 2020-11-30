@@ -29,6 +29,60 @@ namespace VB6ToCSharpCompiler.VB6NodeTranslatorLogging
             return "UNKNOWN_FUNCTION";
         }
 
+        public static string StringArgs(string functionName, VB6NodeTranslator translator, List<ParseTree> parseTrees)
+        {
+            if (translator == null)
+            {
+                throw new ArgumentNullException(nameof(translator));
+            }
+            if (parseTrees == null)
+            {
+                throw new ArgumentNullException(nameof(parseTrees));
+            }
+
+            var sl = new List<string>();
+            sl.Add(functionName);
+            foreach (var child in parseTrees)
+            {
+                if (VB6NodeTranslator.GetNodeTypeName(child) == "ArgListContext")
+                {
+                    foreach (var child2 in translator.nodeTree.GetChildren(child))
+                    {
+                        if (VB6NodeTranslator.GetNodeTypeName(child2) == "ArgContext") {
+                            var argName = "";
+                            var argType = "";
+                            foreach (var child3 in translator.nodeTree.GetChildren(child2))
+                            {
+                                if (VB6NodeTranslator.GetNodeTypeName(child3).Contains("Identifier")) {
+                                    argName = child3.getText();
+                                }
+                                if (VB6NodeTranslator.GetNodeTypeName(child3).Contains("AsTypeClauseContext"))
+                                {
+                                    foreach (var child4 in translator.nodeTree.GetChildren(child3))
+                                    {
+                                        if (VB6NodeTranslator.GetNodeTypeName(child4).Contains("TypeContext")) {
+                                            argType = child4.getText();
+                                        }
+                                    }
+                                }
+                            }
+                            var serializeFunctionName = "Serialize" + argType;
+                            //var body = "return arg";
+
+                            sl.Add(serializeFunctionName + "(" + argName + ")");
+//                          translator.nodeTree.AppendExtra(serializeFunctionName, @"
+//Public Function $FUNCTION(ByVal arg as $ARGTYPE) as String
+//    $BODY    
+//End Function
+//".Replace("$FUNCTION", serializeFunctionName).Replace("$ARGTYPE", argType).Replace("$BODY", body));
+
+                        }
+                    }
+                }
+            }
+            return string.Join(", ", sl);
+        }
+
         public static IEnumerable<OutToken> FunctionEnter(VB6NodeTranslator translator, List<ParseTree> parseTrees)
         {
             if (translator == null)
@@ -55,6 +109,7 @@ namespace VB6ToCSharpCompiler.VB6NodeTranslatorLogging
 
                 //DebugClass.LogError("INDEX: " + index);
                 var functionName = GetFunctionName(translator, parseTrees);
+                var args = StringArgs("\"" + functionName + "\"", translator, parseTrees);
 
                 yield return new OutToken(index - 0.5, @"
 'Dim FileNum
@@ -62,8 +117,8 @@ namespace VB6ToCSharpCompiler.VB6NodeTranslatorLogging
 'Open App.Path & ""\ProgramLog.txt"" For Append As FileNum
 'Print #FileNum, ""ENTER $FUNCTION""
 'Close FileNum
-LogEnter ""$FUNCTION""
-".Replace("$FUNCTION", functionName));
+LogEnter $FUNCTION
+".Replace("$FUNCTION", args));
             }
             else
             {
@@ -94,6 +149,7 @@ LogEnter ""$FUNCTION""
                 //}
 
                 var functionName = GetFunctionName(translator, parseTrees);
+                var args = StringArgs("\"" + functionName + "\"", translator, parseTrees);
 
                 yield return new OutToken(index + 0.5, @"
 'Dim FileNum
@@ -101,8 +157,8 @@ LogEnter ""$FUNCTION""
 'Open App.Path & ""\ProgramLog.txt"" For Append As FileNum
 'Print #FileNum, ""ENTER $FUNCTION""
 'Close FileNum
-LogLeave ""$FUNCTION""
-".Replace("$FUNCTION", functionName));
+LogLeave $FUNCTION
+".Replace("$FUNCTION", args));
             }
             else
             {
