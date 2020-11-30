@@ -14,7 +14,7 @@ namespace VB6ToCSharpCompiler
     {
         private frmVB6ASTBrowser frmVb6AstBrowser;
         private frmPatterns frmPatternsForm;
-        private static string Folder = @"F:\VB6Code";
+        private static string Folder = @"\VB6Code";
 
         public frmCompiler()
         {
