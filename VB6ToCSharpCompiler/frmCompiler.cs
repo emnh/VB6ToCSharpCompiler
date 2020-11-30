@@ -165,7 +165,7 @@ Public Sub LogEnter(ParamArray Text() As Variant)
     Dim intLoopIndex As Integer, Serialized As String
     Serialized = """"
     For intLoopIndex = 0 To UBound(Text)
-      Serialized = Serialized & Text(intLoopIndex)
+      Serialized = Serialized & "", "" & Text(intLoopIndex)
     Next intLoopIndex
     Log ""ENTER "" & Serialized
 End Sub
@@ -174,7 +174,7 @@ Public Sub LogLeave(ParamArray Text() As Variant)
     Dim intLoopIndex As Integer, Serialized As String
     Serialized = """"
     For intLoopIndex = 0 To UBound(Text)
-      Serialized = Serialized & Text(intLoopIndex)
+      Serialized = Serialized & "", "" & Text(intLoopIndex)
     Next intLoopIndex
     Log ""LEAVE "" & Serialized
 End Sub

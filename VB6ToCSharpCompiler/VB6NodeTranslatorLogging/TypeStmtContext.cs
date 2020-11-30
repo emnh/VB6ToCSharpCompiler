@@ -73,12 +73,12 @@ public class TypeStmtContext : VB6NodeTranslator
                     if (fromto.Count == 2)
                     {
                         body += "For x = " + fromto[0] + " to " + fromto[1] + "\r\n";
-                        body += "  s = s & Serialize" + childTypeName + "(arg." + childName + "(x))\r\n";
+                        body += "  s = s & \", \" & Serialize" + childTypeName + "(arg." + childName + "(x))\r\n";
                         body += "Next x\r\n";
                     }
                     else
                     {
-                        body += "s = s & Serialize" + childTypeName + "(arg." + childName + ")\r\n";
+                        body += "s = s & \", \" & Serialize" + childTypeName + "(arg." + childName + ")\r\n";
                     }
                     
                 }
