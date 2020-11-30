@@ -223,7 +223,7 @@
   <ItemGroup>
     <Compile Include="ASTPatternGenerator.cs" />
     <Compile Include="ASTSequenceItem.cs" />
-    <Compile Include="Contexts.cs" />
+    <Compile Include="NodeContexts.cs" />
     <Compile Include="CsharpVisitorCallback.cs" />
     <Compile Include="CustomCSharpSyntaxWalker.cs" />
     <Compile Include="DebugClass.cs" />
@@ -236,6 +236,8 @@
     <Compile Include="IndexedPath.cs" />
     <Compile Include="JavaUtil.cs" />
     <Compile Include="TranslatorForForm.cs" />
+    <Compile Include="VB6NodeTranslator.cs" />
+    <Compile Include="VB6NodeTranslatorLogging\AmbiguousIdentifierContext.cs" />
     <Compile Include="VB6NodeTree.cs" />
     <Compile Include="VB6SubTree.cs" />
     <Compile Include="VbToCsharpPattern.cs" />

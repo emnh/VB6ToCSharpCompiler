@@ -1,5 +1,6 @@
 ﻿using org.antlr.v4.runtime.tree;
 using System;
+using System.Collections.Immutable;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -66,12 +67,85 @@ namespace VB6ToCSharpCompiler
             }
         }
 
+        public static void GetCode(VB6NodeTree nodeTree)
+        {
+            const string genFolder = @"F:\emh-dev\VB6ToCSharpCompiler\VB6ToCSharpCompiler\VB6NodeTranslatorLogging";
+
+            Dictionary<string, Dictionary<ImmutableList<string>, List<VB6SubTree>>> nodeTypeDict = new Dictionary<string, Dictionary<ImmutableList<string>, List<VB6SubTree>>>();
+
+            if (nodeTree == null)
+            {
+                throw new ArgumentNullException(nameof(nodeTree));
+            }
+            // Iterate over all nodes and add them to node hash based on their concatenated type strings
+            foreach (var node in nodeTree.GetAllNodes())
+            {
+                var subtree = new VB6SubTree(nodeTree, node);
+
+                //var nodeTreeHashString = GetNodeTreeHashString(subtree);
+                var nodeHash = GetNodeHash(node);
+
+                if (!nodeTypeDict.ContainsKey(nodeHash))
+                {
+                    nodeTypeDict[nodeHash] = new Dictionary<ImmutableList<string>, List<VB6SubTree>>();
+                }
+
+                var children = ImmutableList.Create<string>();
+                foreach (var child in nodeTree.GetChildren(node))
+                {
+                    var tokens = String.Join(" ", GetTokens(child));
+                    if (!string.IsNullOrEmpty(tokens))
+                    {
+                        children = children.Add(tokens);
+                    } else
+                    {
+                        children = children.Add(GetNodeHash(child));
+                    }
+                }
+                
+                if (!nodeTypeDict[nodeHash].ContainsKey(children))
+                {
+                    nodeTypeDict[nodeHash][children] = new List<VB6SubTree>();
+                }
+                nodeTypeDict[nodeHash][children].Add(subtree);
+            }
+
+            foreach (var key in nodeTypeDict.Keys)
+            {
+                var typeName = key;
+                var value = nodeTypeDict[key];
+
+                var cm = "";
+                var index = 0;
+                var yr = "";
+                foreach (var key2 in value)
+                {
+                    cm += "// " + key2 + "\r\n";
+                    yr += "yield return parseTrees[$INDEX]".Replace("$INDEX", index.ToString(System.Globalization.CultureInfo.InvariantCulture)) + "\r\n";
+                    index++;
+                }
+                
+
+                string outString = @"
+$TYPE
+$BODY
+";
+                outString = outString.Replace("$TYPE", typeName);
+                outString = outString.Replace("$BODY", cm + yr);
+                
+                DebugClass.LogError(outString);
+            }
+        }
+
         public void GetPatterns(VB6NodeTree nodeTree)
         {
             if (nodeTree == null)
             {
                 throw new ArgumentNullException(nameof(nodeTree));
             }
+
+            GetCode(nodeTree);
+
             // Iterate over all nodes and add them to node hash based on their concatenated type strings
             foreach (var node in nodeTree.GetAllNodes())
             {
