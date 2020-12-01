@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace VB6ToCSharpCompiler
@@ -85,6 +86,37 @@ namespace VB6ToCSharpCompiler
                 throw new ArgumentException(nameof(index));
             }
             return index;
+        }
+
+        public IEnumerable<ParseTree> GetNodesByPath(List<ParseTree> parseTrees, List<string> path, int index = 0)
+        {
+            if (parseTrees == null)
+            {
+                throw new ArgumentNullException(nameof(parseTrees));
+            }
+
+            if (path == null)
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            foreach (var child in parseTrees)
+            {
+                if (VB6NodeTranslator.GetNodeTypeName(child).Contains(path[index]))
+                {
+                    if (index < parseTrees.Count)
+                    {
+                        foreach (var match in GetNodesByPath(nodeTree.GetChildren(child), path, index + 1))
+                        {
+                            yield return match;
+                        }
+                    }
+                    else
+                    {
+                        yield return child;
+                    }
+                }
+            }
         }
 
         public IEnumerable<OutToken> UniversalTranslate(ParseTree node)
